@@ -18,3 +18,26 @@ open import Data.Nat.Properties using (+-assoc; +-identityʳ; +-suc; +-comm)
   ≡⟨⟩
     suc n + (m + p)
   ∎
+
+inv : {m n : ℕ} → m ≡ n → n ≡ m
+inv refl = refl
+
++-assoc-inv : ∀ (m n p : ℕ) → m + (n + p) ≡ (m + n) + p
++-assoc-inv m n p = inv (+-assoc m n p)
+
+
+*-distrib-+ : ∀ (m n p : ℕ) → (m + n) * p ≡ m * p + n * p
+*-distrib-+ zero n p = refl
+*-distrib-+ (suc m) n p =
+  (suc m + n) * p
+  ≡⟨⟩
+  suc (m + n) * p
+  ≡⟨⟩
+  p + ((m + n) * p)
+  ≡⟨ cong (_+_ p) (*-distrib-+ m n p) ⟩
+  p + (m * p + n * p)
+  ≡⟨ +-assoc-inv p (m * p) (n * p) ⟩
+  (p + m * p) + n * p
+  ≡⟨⟩
+  suc m * p + n * p
+  ∎
