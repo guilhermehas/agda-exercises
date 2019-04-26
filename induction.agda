@@ -12,7 +12,7 @@ open import Data.Nat.Properties using (+-assoc; +-identityʳ; +-suc; +-comm)
   ≡⟨⟩
     m + suc (n + p)
   ≡⟨ +-suc m (n + p) ⟩
-    suc (m + (n + p))
+    suc (m + (n + p)
   ≡⟨ cong suc (+-swap m n p) ⟩
     suc (n + (m + p))
   ≡⟨⟩
@@ -41,3 +41,15 @@ inv refl = refl
   ≡⟨⟩
   suc m * p + n * p
   ∎
+
+*-assoc : ∀ (m n p : ℕ) → (m * n) * p ≡ m * (n * p)
+*-assoc zero n p = refl
+*-assoc (suc m) n p = 
+  begin
+    (suc m * n) * p
+  ≡⟨⟩
+    (n + (m * n)) * p
+  ≡⟨ *-distrib-+ n (m * n) p ⟩
+    n * p + m * n * p
+  ≡⟨ cong (_+_ (n * p)) *-distrib-+ ⟩
+   {!!}
