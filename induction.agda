@@ -12,7 +12,7 @@ open import Data.Nat.Properties using (+-assoc; +-identityʳ; +-suc; +-comm)
   ≡⟨⟩
     m + suc (n + p)
   ≡⟨ +-suc m (n + p) ⟩
-    suc (m + (n + p)
+    suc (m + (n + p))
   ≡⟨ cong suc (+-swap m n p) ⟩
     suc (n + (m + p))
   ≡⟨⟩
@@ -29,27 +29,30 @@ inv refl = refl
 *-distrib-+ : ∀ (m n p : ℕ) → (m + n) * p ≡ m * p + n * p
 *-distrib-+ zero n p = refl
 *-distrib-+ (suc m) n p =
-  (suc m + n) * p
+    (suc m + n) * p
   ≡⟨⟩
-  suc (m + n) * p
+    suc (m + n) * p
   ≡⟨⟩
-  p + ((m + n) * p)
+    p + (m + n) * p
   ≡⟨ cong (_+_ p) (*-distrib-+ m n p) ⟩
   p + (m * p + n * p)
   ≡⟨ +-assoc-inv p (m * p) (n * p) ⟩
-  (p + m * p) + n * p
+    (p + m * p) + n * p
   ≡⟨⟩
-  suc m * p + n * p
+    suc m * p + n * p
   ∎
 
 *-assoc : ∀ (m n p : ℕ) → (m * n) * p ≡ m * (n * p)
 *-assoc zero n p = refl
-*-assoc (suc m) n p = 
+*-assoc (suc m) n p =
   begin
     (suc m * n) * p
   ≡⟨⟩
     (n + (m * n)) * p
   ≡⟨ *-distrib-+ n (m * n) p ⟩
     n * p + m * n * p
-  ≡⟨ cong (_+_ (n * p)) *-distrib-+ ⟩
-   {!!}
+  ≡⟨ cong (_+_ (n * p)) (*-assoc m n p) ⟩
+   n * p + m * (n * p)
+  ≡⟨⟩
+    (suc m) * (n * p)
+  ∎
