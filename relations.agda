@@ -2,7 +2,7 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; cong)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_)
 open import Data.Nat.Properties using (+-comm; *-comm)
-open import Data.Nat using (_≤_; z≤n; s≤s)
+open import Data.Nat using (_≤_; _<_; z≤n; s≤s)
 open import Data.Nat.Properties using (≤-refl; ≤-trans; ≤-antisym; ≤-total;+-monoʳ-≤; +-monoˡ-≤; +-mono-≤)
 
 *-mono-≤ : ∀ {m n p q : ℕ}
@@ -65,3 +65,13 @@ e+o≡o zero on = on
 e+o≡o (suc em) on = suc (o+o≡e em on)
 
 o+o≡e (suc em) on = suc (e+o≡o em on)
+
+≤-iff-<ʳ : {m n : ℕ} → suc m ≤ n → m < n
+≤-iff-<ʳ {m} {zero} ()
+≤-iff-<ʳ {zero} {suc n} (s≤s z≤n) = s≤s z≤n
+≤-iff-<ʳ {suc m} {suc n} (s≤s ineq) = s≤s ineq
+
+≤-iff-<ˡ : {m n : ℕ}  → m < n → suc m ≤ n
+≤-iff-<ˡ {m} {zero} ()
+≤-iff-<ˡ {zero} {suc n} ineq = s≤s z≤n
+≤-iff-<ˡ {suc m} {suc n} (s≤s ineq) = s≤s ineq

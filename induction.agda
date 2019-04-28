@@ -98,3 +98,15 @@ inv refl = refl
   ≡⟨ cong suc (*-proofSum n m) ⟩
     suc (m + n * suc m)
   ∎
+
+0∸n≡0 : ∀ (n : ℕ) → 0 ∸ n ≡ 0
+0∸n≡0 zero = refl
+0∸n≡0 (suc n) = refl
+
+∸-+-assoc : ∀ (m n p : ℕ) → m ∸ n ∸ p ≡ m ∸ (n + p)
+∸-+-assoc zero zero p = refl
+∸-+-assoc zero (suc n) zero = refl
+∸-+-assoc zero (suc n) (suc p) = refl
+∸-+-assoc (suc m) zero p = refl
+∸-+-assoc (suc m) (suc n) zero = ∸-+-assoc m n zero
+∸-+-assoc (suc m) (suc n) (suc p) = ∸-+-assoc m n (suc p)
