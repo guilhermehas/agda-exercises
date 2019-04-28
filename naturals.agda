@@ -1,5 +1,67 @@
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_)
-open import Data.Nat.DivMod using (_%_; _div_)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl)
+open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _∎)
+
++-example : 3 + 4 ≡ 7
++-example =
+  begin
+    3 + 4
+  ≡⟨⟩
+    suc (2 + 4)
+  ≡⟨⟩
+    suc (suc (1 + 4))
+  ≡⟨⟩
+    suc (suc (suc (0 + 4)))
+  ≡⟨⟩
+    suc (suc (suc 4))
+  ≡⟨⟩
+    suc (suc 5)
+  ≡⟨⟩
+    suc 6
+  ≡⟨⟩
+    7
+  ∎
+
+*-example : 3 * 4 ≡ 12
+*-example =
+  begin
+    3 * 4
+  ≡⟨⟩
+    3 + (3 * 3)
+  ≡⟨⟩
+    3 + (3 + (2 * 3))
+  ≡⟨⟩
+    3 + (3 + (3 + (1 * 3)))
+  ≡⟨⟩
+    3 + (3 + (3 + (3 + (0 * 3))))
+  ≡⟨⟩
+    12
+  ∎
+
+∸-examples-1 : 5 ∸ 3 ≡ 2
+∸-examples-1 =
+  begin
+    5 ∸ 3
+  ≡⟨⟩
+    4 ∸ 2
+  ≡⟨⟩
+    3 ∸ 1
+  ≡⟨⟩
+    2
+  ∎
+
+∸-examples-2 : 3 ∸ 5 ≡ 0
+∸-examples-2 =
+  begin
+    3 ∸ 5
+  ≡⟨⟩
+    2 ∸ 4
+  ≡⟨⟩
+    1 ∸ 3
+  ≡⟨⟩
+    0
+  ∎
 
 data Bin : Set where
   nil : Bin

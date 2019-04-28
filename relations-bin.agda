@@ -4,9 +4,11 @@ open import Data.Nat using (ℕ; zero; suc; _+_; _*_)
 open import Data.Nat.Properties using (+-comm; *-comm)
 open import Data.Nat using (_≤_; z≤n; s≤s)
 open import Data.Nat.Properties using (≤-refl; ≤-trans; ≤-antisym; ≤-total;+-monoʳ-≤; +-monoˡ-≤; +-mono-≤)
+open import Data.Nat.DivMod using (_%_)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
-open import naturals using (Bin; x0_; x1_; nil; inc)
+open import naturals
+open import Data.Bool using (true; false)
 
 data One : Bin → Set
 data Can : Bin → Set
