@@ -25,7 +25,6 @@ inv refl = refl
 +-assoc-inv : ∀ (m n p : ℕ) → m + (n + p) ≡ (m + n) + p
 +-assoc-inv m n p = inv (+-assoc m n p)
 
-
 *-distrib-+ : ∀ (m n p : ℕ) → (m + n) * p ≡ m * p + n * p
 *-distrib-+ zero n p = refl
 *-distrib-+ (suc m) n p =
@@ -55,4 +54,47 @@ inv refl = refl
    n * p + m * (n * p)
   ≡⟨⟩
     (suc m) * (n * p)
+  ∎
+
+-- (m + 1) * n
+-- n + m * n
+-- n * suc m
+
+-- n + m * n
+-- n + n * m
+-- n + m * n
+-- m - m + n + m * n
+-- m + m * n
+
+
+*-comm : ∀ (m n : ℕ) → m * n ≡ n * m
+
+*-proofSum : ∀ (n m : ℕ) → n + m * suc n ≡ m + n * suc m
+*-proofSum n m = 
+  begin
+    n + m * suc n
+  ≡⟨ cong (_+_ n) (*-comm m (suc n)) ⟩
+    n + (m + n * m)
+  ≡⟨ +-swap n m (n * m) ⟩
+    m + (n + n * m)
+    ≡⟨ cong (_+_ m) (
+       begin
+         n + n * m
+       ≡⟨ cong (_+_ n) (*-comm n m) ⟩
+         suc m * n
+       ≡⟨ *-comm (suc m) n ⟩
+         n * suc m
+       ∎
+    ) ⟩
+    m + n * suc m
+  ∎
+
+*-comm zero zero = refl
+*-comm zero (suc n) = *-comm zero n
+*-comm (suc m) zero = *-comm m zero
+*-comm (suc m) (suc n) =
+  begin
+    suc (n + m * suc n)
+  ≡⟨ cong suc (*-proofSum n m) ⟩
+    suc (m + n * suc m)
   ∎
