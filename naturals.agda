@@ -7,9 +7,11 @@ data Bin : Set where
   x1_ : Bin → Bin
 
 inc : Bin → Bin
-inc nil = x1_ nil
+inc nil = nil
 inc (x0 n) = x1_ n
-inc (x1 n) = x0_ (inc n)
+inc (x1 nil) = x0 x1 nil
+inc (x1 (x0 n)) = x0 x1 (inc n)
+inc (x1 (x1 n)) = x0 (inc (x1 n))
 
 from : Bin → ℕ
 from nil = 0
