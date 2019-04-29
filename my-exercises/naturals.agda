@@ -86,10 +86,6 @@ from nil = 0
 from (x0 n) = 2 * from n
 from (x1 n) = 2 * from n + 1
 
-to' : ℕ → List Bit
-to' zero _ = {!zero!}
-to' (suc n) m = {!!}
-
 to : ℕ → Bin
 to zero = x0_ nil
 to (suc n) = inc (to n)

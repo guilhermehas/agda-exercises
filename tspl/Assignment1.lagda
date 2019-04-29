@@ -34,6 +34,8 @@ open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _≡⟨_⟩_; _∎)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _∸_; _≤_; z≤n; s≤s)
 open import Data.Nat.Properties using (+-assoc; +-identityʳ; +-suc; +-comm;
   ≤-refl; ≤-trans; ≤-antisym; ≤-total; +-monoʳ-≤; +-monoˡ-≤; +-mono-≤)
+open import Data.Empty using (⊥)
+open import Data.Empty.Irrelevant using (⊥-elim)
 open import plfa.Relations using (_<_; z<s; s<s; zero; suc; even; odd)
 \end{code}
 
@@ -43,16 +45,54 @@ open import plfa.Relations using (_<_; z<s; s<s; zero; suc; even; odd)
 
 Write out `7` in longhand.
 
+\begin{code}
++-example : 3 + 4 ≡ 7
++-example =
+  begin
+    3 + 4
+  ≡⟨⟩
+    suc (2 + 4)
+  ≡⟨⟩
+    suc (suc (1 + 4))
+  ≡⟨⟩
+    suc (suc (suc (0 + 4)))
+  ≡⟨⟩
+    suc (suc (suc 4))
+  ≡⟨⟩
+    suc (suc 5)
+  ≡⟨⟩
+    suc 6
+  ≡⟨⟩
+    7
+  ∎
+\end{code}
+
 
 #### Exercise `+-example` {#plus-example}
 
 Compute `3 + 4`, writing out your reasoning as a chain of equations.
 
-
 #### Exercise `*-example` {#times-example}
 
 Compute `3 * 4`, writing out your reasoning as a chain of equations.
 
+\begin{code}
+*-example : 3 * 4 ≡ 12
+*-example =
+  begin
+    3 * 4
+  ≡⟨⟩
+    3 + (3 * 3)
+  ≡⟨⟩
+    3 + (3 + (2 * 3))
+  ≡⟨⟩
+    3 + (3 + (3 + (1 * 3)))
+  ≡⟨⟩
+    3 + (3 + (3 + (3 + (0 * 3))))
+  ≡⟨⟩
+    12
+  ∎
+\end{code}
 
 #### Exercise `_^_` (recommended) {#power}
 
@@ -63,11 +103,41 @@ Define exponentiation, which is given by the following equations.
 
 Check that `3 ^ 4` is `81`.
 
+\begin{code}
+_^_ : ℕ → ℕ → ℕ
+n ^ zero = 1
+n ^ suc m = n * (n ^ m)
+\end{code}
 
 #### Exercise `∸-examples` (recommended) {#monus-examples}
 
 Compute `5 ∸ 3` and `3 ∸ 5`, writing out your reasoning as a chain of equations.
 
+\begin{code}
+∸-examples-1 : 5 ∸ 3 ≡ 2
+∸-examples-1 =
+  begin
+    5 ∸ 3
+  ≡⟨⟩
+    4 ∸ 2
+  ≡⟨⟩
+    3 ∸ 1
+  ≡⟨⟩
+    2
+  ∎
+
+∸-examples-2 : 3 ∸ 5 ≡ 0
+∸-examples-2 =
+  begin
+    3 ∸ 5
+  ≡⟨⟩
+    2 ∸ 4
+  ≡⟨⟩
+    1 ∸ 3
+  ≡⟨⟩
+    0
+  ∎
+\end{code}
 
 #### Exercise `Bin` (stretch) {#Bin}
 
@@ -114,6 +184,29 @@ For the former, choose the bitstring to have no leading zeros if it
 represents a positive natural, and represent zero by `x0 nil`.
 Confirm that these both give the correct answer for zero through four.
 
+\begin{code}
+-- data Bin : Set where
+--   nil : Bin
+--   x0_ : Bin → Bin
+--   x1_ : Bin → Bin
+
+inc : Bin → Bin
+inc nil = nil
+inc (x0 n) = x1_ n
+inc (x1 nil) = x0 x1 nil
+inc (x1 (x0 n)) = x0 x1 (inc n)
+inc (x1 (x1 n)) = x0 (inc (x1 n))
+
+from : Bin → ℕ
+from nil = 0
+from (x0 n) = 2 * from n
+from (x1 n) = 2 * from n + 1
+
+to : ℕ → Bin
+to zero = x0_ nil
+to (suc n) = inc (to n)
+\end{code}
+
 ## Induction
 
 #### Exercise `operators` {#operators}
@@ -124,12 +217,21 @@ and are associative, commutative, and distribute over one another.
 Give an example of an operator that has an identity and is
 associative but is not commutative.
 
-
 #### Exercise `finite-+-assoc` (stretch) {#finite-plus-assoc}
 
 Write out what is known about associativity of addition on each of the first four
 days using a finite story of creation, as
 [earlier][plfa.Naturals#finite-creation]
+
+\begin{code}
+∸-+-assoc : ∀ (m n p : ℕ) → m ∸ n ∸ p ≡ m ∸ (n + p)
+∸-+-assoc zero zero p = refl
+∸-+-assoc zero (suc n) zero = refl
+∸-+-assoc zero (suc n) (suc p) = refl
+∸-+-assoc (suc m) zero p = refl
+∸-+-assoc (suc m) (suc n) zero = ∸-+-assoc m n zero
+∸-+-assoc (suc m) (suc n) (suc p) = ∸-+-assoc m n (suc p)
+\end{code}
 
 
 #### Exercise `+-swap` (recommended) {#plus-swap} 
@@ -145,6 +247,23 @@ the following function from the standard library:
 
     sym : ∀ {m n : ℕ} → m ≡ n → n ≡ m
 
+\begin{code}
++-swap : ∀ (m n p : ℕ) → m + (n + p) ≡ n + (m + p)
++-swap m zero p = refl
++-swap m (suc n) p =
+  begin
+    m + (suc n + p)
+  ≡⟨⟩
+    m + suc (n + p)
+  ≡⟨ +-suc m (n + p) ⟩
+    suc (m + (n + p))
+  ≡⟨ cong suc (+-swap m n p) ⟩
+    suc (n + (m + p))
+  ≡⟨⟩
+    suc n + (m + p)
+  ∎
+\end{code}
+
 
 #### Exercise `*-distrib-+` (recommended) {#times-distrib-plus}
 
@@ -154,6 +273,30 @@ Show multiplication distributes over addition, that is,
 
 for all naturals `m`, `n`, and `p`.
 
+\begin{code}
+inv : {m n : ℕ} → m ≡ n → n ≡ m
+inv refl = refl
+
++-assoc-inv : ∀ (m n p : ℕ) → m + (n + p) ≡ (m + n) + p
++-assoc-inv m n p = inv (+-assoc m n p)
+
+*-distrib-+ : ∀ (m n p : ℕ) → (m + n) * p ≡ m * p + n * p
+*-distrib-+ zero n p = refl
+*-distrib-+ (suc m) n p =
+    (suc m + n) * p
+  ≡⟨⟩
+    suc (m + n) * p
+  ≡⟨⟩
+    p + (m + n) * p
+  ≡⟨ cong (_+_ p) (*-distrib-+ m n p) ⟩
+  p + (m * p + n * p)
+  ≡⟨ +-assoc-inv p (m * p) (n * p) ⟩
+    (p + m * p) + n * p
+  ≡⟨⟩
+    suc m * p + n * p
+  ∎
+\end{code}
+
 #### Exercise `*-assoc` (recommended) {#times-assoc}
 
 Show multiplication is associative, that is,
@@ -161,6 +304,23 @@ Show multiplication is associative, that is,
     (m * n) * p ≡ m * (n * p)
 
 for all naturals `m`, `n`, and `p`.
+
+\begin{code}
+*-assoc : ∀ (m n p : ℕ) → (m * n) * p ≡ m * (n * p)
+*-assoc zero n p = refl
+*-assoc (suc m) n p =
+  begin
+    (suc m * n) * p
+  ≡⟨⟩
+    (n + (m * n)) * p
+  ≡⟨ *-distrib-+ n (m * n) p ⟩
+    n * p + m * n * p
+  ≡⟨ cong (_+_ (n * p)) (*-assoc m n p) ⟩
+   n * p + m * (n * p)
+  ≡⟨⟩
+    (suc m) * (n * p)
+  ∎
+\end{code}
 
 #### Exercise `*-comm` {#times-comm}
 
@@ -171,6 +331,40 @@ Show multiplication is commutative, that is,
 for all naturals `m` and `n`.  As with commutativity of addition,
 you will need to formulate and prove suitable lemmas.
 
+\begin{code}
+*-comm : ∀ (m n : ℕ) → m * n ≡ n * m
+
+*-proofSum : ∀ (n m : ℕ) → n + m * suc n ≡ m + n * suc m
+*-proofSum n m = 
+  begin
+    n + m * suc n
+  ≡⟨ cong (_+_ n) (*-comm m (suc n)) ⟩
+    n + (m + n * m)
+  ≡⟨ +-swap n m (n * m) ⟩
+    m + (n + n * m)
+    ≡⟨ cong (_+_ m) (
+       begin
+         n + n * m
+       ≡⟨ cong (_+_ n) (*-comm n m) ⟩
+         suc m * n
+       ≡⟨ *-comm (suc m) n ⟩
+         n * suc m
+       ∎
+    ) ⟩
+    m + n * suc m
+  ∎
+
+*-comm zero zero = refl
+*-comm zero (suc n) = *-comm zero n
+*-comm (suc m) zero = *-comm m zero
+*-comm (suc m) (suc n) =
+  begin
+    suc (n + m * suc n)
+  ≡⟨ cong suc (*-proofSum n m) ⟩
+    suc (m + n * suc m)
+  ∎
+\end{code}
+
 #### Exercise `0∸n≡0` {#zero-monus}
 
 Show
@@ -178,6 +372,12 @@ Show
     zero ∸ n ≡ zero
 
 for all naturals `n`. Did your proof require induction?
+
+\begin{code}
+0∸n≡0 : ∀ (n : ℕ) → 0 ∸ n ≡ 0
+0∸n≡0 zero = refl
+0∸n≡0 (suc n) = refl
+\end{code}
 
 #### Exercise `∸-+-assoc` {#monus-plus-assoc}
 
@@ -228,10 +428,26 @@ argument is `s≤s`.  Why is it ok to omit them?
 
 Show that multiplication is monotonic with regard to inequality.
 
+\begin{code}
+*-mono-≤ : ∀ {m n p q : ℕ}
+  → m ≤ n
+  → p ≤ q
+  -------------
+  → m * p ≤ n * q
+
+*-mono-≤ z≤n p≤q = z≤n
+*-mono-≤ {suc m} {suc n} {p} {q} (s≤s m≤n) p≤q = +-mono-≤ p≤q (*-mono-≤ m≤n p≤q)
+\end{code}
 
 #### Exercise `<-trans` (recommended) {#less-trans}
 
 Show that strict inequality is transitive.
+
+\begin{code}
+<-trans : ∀ {m n p : ℕ} → m < n → n < p → m < p
+<-trans z<s (s<s n<p) = z<s
+<-trans (s<s m<n) (s<s n<p) = s<s (<-trans m<n n<p)
+\end{code}
 
 #### Exercise `trichotomy` {#trichotomy}
 
@@ -246,6 +462,34 @@ similar to that used for totality.
 (We will show that the three cases are exclusive after we introduce
 [negation][plfa.Negation].)
 
+\begin{code}
+data Ordering : ℕ → ℕ → Set where
+  less : {m n : ℕ} → .(m < n) → Ordering m n
+  equal : {m n : ℕ} → .(m ≡ n) → Ordering m n
+  greater : {m n : ℕ} → .(n < m) → Ordering m n
+
+≡-same : ∀ {m n : ℕ} → m ≡ n → n ≡ m
+≡-same refl = refl
+
+<-≡-disjoint : ∀ {m n} → (m < n) → (m ≡ n) → ⊥
+<-≡-disjoint (s<s m<n) refl = <-≡-disjoint m<n refl
+
+<->-disjoint : ∀ {m n} → (m < n) → (n < m) → ⊥
+<->-disjoint z<s ()
+<->-disjoint (s<s m<n) (s<s n<m) = <->-disjoint m<n n<m
+
+trichotomy : ∀ {m n : ℕ} → (x : Ordering m n) → (y : Ordering m n) → x ≡ y
+trichotomy (less x) (less y) = refl
+trichotomy (less x) (equal y) = ⊥-elim (<-≡-disjoint x y)
+trichotomy (less x) (greater y) = ⊥-elim  (<->-disjoint x y)
+trichotomy (equal x) (less y) = ⊥-elim  (<-≡-disjoint y x)
+trichotomy (equal x) (equal y) = refl
+trichotomy (equal x) (greater y) = ⊥-elim  (<-≡-disjoint y (≡-same x))
+trichotomy (greater x) (less y) = ⊥-elim  (<->-disjoint y x)
+trichotomy (greater x) (equal y) = ⊥-elim (<-≡-disjoint x (≡-same y))
+trichotomy (greater x) (greater y) = refl
+\end{code}
+
 #### Exercise `+-mono-<` {#plus-mono-less}
 
 Show that addition is monotonic with respect to strict inequality.
@@ -255,15 +499,52 @@ As with inequality, some additional definitions may be required.
 
 Show that `suc m ≤ n` implies `m < n`, and conversely.
 
+\begin{code}
+≤-iff-<ʳ : {m n : ℕ} → suc m ≤ n → m < n
+≤-iff-<ʳ {zero} {.(suc _)} (s≤s m<n) = z<s
+≤-iff-<ʳ {suc m} {.(suc _)} (s≤s m<n) = s<s (≤-iff-<ʳ m<n)
+
+≤-iff-<ˡ : {m n : ℕ}  → m < n → suc m ≤ n
+≤-iff-<ˡ z<s = s≤s z≤n
+≤-iff-<ˡ (s<s m<n) = s≤s (≤-iff-<ˡ m<n)
+\end{code}
+
 #### Exercise `<-trans-revisited` {#less-trans-revisited}
 
 Give an alternative proof that strict inequality is transitive,
 using the relating between strict inequality and inequality and
 the fact that inequality is transitive.
 
+\begin{code}
+<-trans-revisited : ∀ {m n p : ℕ} → m < n → n < p → m < p
+<-trans-revisited {zero} {.(suc _)} {.(suc _)} z<s (s<s n<p) = z<s
+<-trans-revisited {suc m} {.(suc _)} {zero} (s<s m<n) ()
+<-trans-revisited {suc m} {.1} {suc .(suc _)} (s<s ()) (s<s z<s)
+<-trans-revisited {suc .0} {.(suc (suc _))} {suc .(suc _)} (s<s z<s) (s<s (s<s n<p)) = s<s z<s
+<-trans-revisited {suc .(suc _)} {.(suc (suc _))} {suc .(suc _)} (s<s (s<s m<n)) (s<s (s<s n<p)) = s<s (s<s (<-trans-revisited m<n n<p))
+\end{code}
+
 #### Exercise `o+o≡e` (stretch) {#odd-plus-odd}
 
 Show that the sum of two odd numbers is even.
+
+\begin{code}
+e+o≡o : ∀ {m n : ℕ}
+  → even m
+  → odd n
+  -----------
+  → odd (m + n)
+
+o+o≡e : ∀ {m n : ℕ}
+  → odd m
+  → odd n
+  → even (m + n)
+
+e+o≡o zero on = on
+e+o≡o (suc em) on = suc (o+o≡e em on)
+
+o+o≡e (suc em) on = suc (e+o≡o em on)
+\end{code}
 
 #### Exercise `Bin-predicates` (stretch) {#Bin-predicates}
 
