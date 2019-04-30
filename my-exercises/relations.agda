@@ -120,10 +120,3 @@ trichotomy (greater x) (greater y) = refl
 <-trans-revisited : ∀ {m n p : ℕ} → m < n → n < p → m < p
 <-trans-revisited (s≤s z≤n) (s≤s (s≤s n<p)) = s≤s z≤n
 <-trans-revisited (s≤s (s≤s m<n)) (s≤s (s≤s (s≤s n<p))) = s≤s (s≤s (≤-sucʳ ( ≤-trans m<n n<p)))
-
--- suc m <= n
--- suc n <= p
-
--- suc m <= suc n
--- suc (suc n) <= suc p
-

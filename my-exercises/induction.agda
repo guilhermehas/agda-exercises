@@ -56,17 +56,6 @@ inv refl = refl
     (suc m) * (n * p)
   ∎
 
--- (m + 1) * n
--- n + m * n
--- n * suc m
-
--- n + m * n
--- n + n * m
--- n + m * n
--- m - m + n + m * n
--- m + m * n
-
-
 *-comm : ∀ (m n : ℕ) → m * n ≡ n * m
 
 *-proofSum : ∀ (n m : ℕ) → n + m * suc n ≡ m + n * suc m

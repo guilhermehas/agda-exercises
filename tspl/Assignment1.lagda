@@ -8,7 +8,8 @@ permalink : /Assignment1/
 module Assignment1 where
 \end{code}
 
-## YOUR NAME AND EMAIL GOES HERE
+Guilherme Horta Alvares da Silva
+guilhermehas@hotmail.com
 
 ## Introduction
 
@@ -35,6 +36,7 @@ open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _∸_; _≤_; z≤n; s≤s
 open import Data.Nat.Properties using (+-assoc; +-identityʳ; +-suc; +-comm;
   ≤-refl; ≤-trans; ≤-antisym; ≤-total; +-monoʳ-≤; +-monoˡ-≤; +-mono-≤)
 open import Data.Empty using (⊥)
+open import Data.Bool
 open import Data.Empty.Irrelevant using (⊥-elim)
 open import plfa.Relations using (_<_; z<s; s<s; zero; suc; even; odd)
 \end{code}
@@ -44,6 +46,15 @@ open import plfa.Relations using (_<_; z<s; s<s; zero; suc; even; odd)
 #### Exercise `seven` {#seven}
 
 Write out `7` in longhand.
+
+\begin{code}
+example7 : 7 ≡ (suc (suc (suc (suc (suc (suc (suc zero)))))))
+example7 = refl
+\end{code}
+
+#### Exercise `+-example` {#plus-example}
+
+Compute `3 + 4`, writing out your reasoning as a chain of equations.
 
 \begin{code}
 +-example : 3 + 4 ≡ 7
@@ -66,11 +77,6 @@ Write out `7` in longhand.
     7
   ∎
 \end{code}
-
-
-#### Exercise `+-example` {#plus-example}
-
-Compute `3 + 4`, writing out your reasoning as a chain of equations.
 
 #### Exercise `*-example` {#times-example}
 
@@ -185,11 +191,6 @@ represents a positive natural, and represent zero by `x0 nil`.
 Confirm that these both give the correct answer for zero through four.
 
 \begin{code}
--- data Bin : Set where
---   nil : Bin
---   x0_ : Bin → Bin
---   x1_ : Bin → Bin
-
 inc : Bin → Bin
 inc nil = nil
 inc (x0 n) = x1_ n
@@ -214,8 +215,16 @@ to (suc n) = inc (to n)
 Give another example of a pair of operators that have an identity
 and are associative, commutative, and distribute over one another.
 
+```
+  The XOR operator with distributivity with multiplication.
+```
+
 Give an example of an operator that has an identity and is
 associative but is not commutative.
+
+```
+  In matrix multiplication. The operator * is associativity A*(B*C) = (A*B)*C, has identity I. But A*B ≠ B*A. ‌
+```
 
 #### Exercise `finite-+-assoc` (stretch) {#finite-plus-assoc}
 
@@ -223,16 +232,21 @@ Write out what is known about associativity of addition on each of the first fou
 days using a finite story of creation, as
 [earlier][plfa.Naturals#finite-creation]
 
-\begin{code}
-∸-+-assoc : ∀ (m n p : ℕ) → m ∸ n ∸ p ≡ m ∸ (n + p)
-∸-+-assoc zero zero p = refl
-∸-+-assoc zero (suc n) zero = refl
-∸-+-assoc zero (suc n) (suc p) = refl
-∸-+-assoc (suc m) zero p = refl
-∸-+-assoc (suc m) (suc n) zero = ∸-+-assoc m n zero
-∸-+-assoc (suc m) (suc n) (suc p) = ∸-+-assoc m n (suc p)
-\end{code}
+```
+-- On the first day, we know about associativity of 0.
+(0 + 0) + 0 ≡ 0 + (0 + 0)   ...   (4 + 0) + 5 ≡ 4 + (0 + 5)   ...
 
+-- On the second day, we know about associativity of 0 and 1.
+(0 + 0) + 0 ≡ 0 + (0 + 0)   ...   (4 + 0) + 5 ≡ 4 + (0 + 5)   ...
+(0 + 1) + 0 ≡ 0 + (1 + 0)   ...   (4 + 1) + 5 ≡ 4 + (1 + 5)   ...
+
+-- On the third day, we know about associativity of 0, 1, and 2.
+(0 + 0) + 0 ≡ 0 + (0 + 0)   ...   (4 + 0) + 5 ≡ 4 + (0 + 5)   ...
+(0 + 1) + 0 ≡ 0 + (1 + 0)   ...   (4 + 1) + 5 ≡ 4 + (1 + 5)   ...
+(0 + 2) + 0 ≡ 0 + (2 + 0)   ...   (4 + 2) + 5 ≡ 4 + (2 + 5)   ...
+
+
+```
 
 #### Exercise `+-swap` (recommended) {#plus-swap} 
 
@@ -387,6 +401,16 @@ Show that monus associates with addition, that is,
 
 for all naturals `m`, `n`, and `p`.
 
+\begin{code}
+∸-+-assoc : ∀ (m n p : ℕ) → m ∸ n ∸ p ≡ m ∸ (n + p)
+∸-+-assoc zero zero p = refl
+∸-+-assoc zero (suc n) zero = refl
+∸-+-assoc zero (suc n) (suc p) = refl
+∸-+-assoc (suc m) zero p = refl
+∸-+-assoc (suc m) (suc n) zero = ∸-+-assoc m n zero
+∸-+-assoc (suc m) (suc n) (suc p) = ∸-+-assoc m n (suc p)
+\end{code}
+
 #### Exercise `Bin-laws` (stretch) {#Bin-laws}
 
 Recall that 
@@ -407,6 +431,34 @@ over bitstrings.
 
 For each law: if it holds, prove; if not, give a counterexample.
 
+\begin{code}
+exampleNotToFrom : to (from (x0 x0 nil)) ≡ (x0 x0 nil) → ⊥
+exampleNotToFrom ()
+
+inc-nil : ∀ {b : Bin} → inc b ≡ nil → b ≡ nil
+inc-nil {nil} refl = refl
+inc-nil {x0 b} ()
+inc-nil {x1 nil} ()
+inc-nil {x1 (x0 b)} ()
+inc-nil {x1 (x1 b)} ()
+
+to-nil-absurd : ∀ {b : Bin} {n : ℕ} → b ≡ to n → b ≡ nil → ⊥
+to-nil-absurd {.(x0 nil)} {zero} refl ()
+to-nil-absurd {.(inc (to n))} {suc n} refl eq = to-nil-absurd {to n} {n} refl (inc-nil {to n} eq)
+
+-- nat-inj-helper : ∀ {x : Bin} {n : ℕ} → x ≡ to n →  from (inc x) ≡ suc (from x)
+-- nat-inj-helper {nil} {zero} ()
+-- nat-inj-helper {nil} {suc n} eq = ⊥-elim (to-nil-absurd refl (inc-nil {to n} (sym eq )))
+-- nat-inj-helper {x0 x} {n} eq = {!!}
+-- nat-inj-helper {x1 nil} {n} eq = {!!}
+-- nat-inj-helper {x1 (x0 x)} {n} eq = {!!}
+-- nat-inj-helper {x1 (x1 x)} {n} eq = {!!}
+
+-- natInject : ∀ {n ∶ ℕ} → from (to n) ≡ n
+-- natInject {zero} = refl
+-- natInject {suc n} = {!!}
+
+\end{code}
 
 ## Relations
 
@@ -415,14 +467,34 @@ For each law: if it holds, prove; if not, give a counterexample.
 
 Give an example of a preorder that is not a partial order.
 
+\begin{code}
+data _≤b_ : Bool → Bool → Set where
+  all : (b₁ b₂ : Bool) → b₁ ≤b b₂
+
+≤b-refl : ∀ {n : Bool} → n ≤b n
+≤b-refl {n} = all n n
+
+≤b-trans : ∀ {m n p : Bool} → m ≤b n → n ≤b p → m ≤b p
+≤b-trans {m} {_} {p} _ _ = all m p
+
+not-≤b-symm : ∀ {m n : Bool} → m ≡ false → n ≡ true → m ≤b n → n ≤b m → m ≡ n → ⊥
+not-≤b-symm {false} {.false} refl () m<n n<m refl
+\end{code}
+
 Give an example of a partial order that is not a preorder.
 
+```
+  It is impossible because all partial order is a preoder
+```
 
 #### Exercise `≤-antisym-cases` {#leq-antisym-cases} 
 
 The above proof omits cases where one argument is `z≤n` and one
 argument is `s≤s`.  Why is it ok to omit them?
 
+```
+  In the case that (s≤s m≤n), we have .m = suc m and .n = suc n. In the second argument, it will be suc n ≤ suc m. The constructor z≤z is impossible, because zero is not suc n and is not suc m.
+```
 
 #### Exercise `*-mono-≤` (stretch)
 
@@ -494,6 +566,22 @@ trichotomy (greater x) (greater y) = refl
 
 Show that addition is monotonic with respect to strict inequality.
 As with inequality, some additional definitions may be required.
+
+\begin{code}
+eq-< : ∀ (m n p : ℕ) → n ≡ p → m < n → m < p
+eq-< m n .n refl m<n = m<n
+
++-mono-< : ∀ (m n p q : ℕ)
+  → m < n
+  → p < q
+  ---------------
+  → m + p < n + q
++-mono-< zero zero p q m<n p<q = p<q
++-mono-< zero (suc n) zero q m<n p<q = z<s
++-mono-< zero (suc n) (suc p) (suc q) z<s (s<s p<q) = s<s (eq-< p (suc n + q) (n + suc q) (sym (+-suc n q)) (+-mono-< zero (suc n) p q z<s p<q) )
++-mono-< (suc m) zero p q () p<q
++-mono-< (suc m) (suc n) p q (s<s m<n) p<q = s<s (+-mono-< m n p q m<n p<q)
+\end{code}
 
 #### Exercise `≤-iff-<` (recommended) {#leq-iff-less}
 
@@ -591,6 +679,5 @@ and back is the identity.
     ---------------
     to (from x) ≡ x
 
-\end{code}
 (Hint: For each of these, you may first need to prove related
 properties of `One`.)
