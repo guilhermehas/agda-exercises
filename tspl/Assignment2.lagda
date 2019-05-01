@@ -178,20 +178,62 @@ Show sum is commutative up to isomorphism.
 
 Show sum is associative up to ismorphism. 
 
+\begin{code}
+⊎-assoc : ∀ {A B C : Set} → ((A ⊎ B) ⊎ C) ⇔ (A ⊎ (B ⊎ C))
+⊎-assoc = record { to = ⊎-assocˡ ; from = ⊎-assocʳ }
+  where
+    ⊎-assocˡ : ∀ {A B C : Set} → ((A ⊎ B) ⊎ C) → (A ⊎ (B ⊎ C))
+    ⊎-assocˡ (inj₁ (inj₁ a)) = inj₁ a
+    ⊎-assocˡ (inj₁ (inj₂ b)) = inj₂ (inj₁ b)
+    ⊎-assocˡ (inj₂ c) = inj₂ (inj₂ c)
+
+    ⊎-assocʳ : ∀ {A B C : Set} → (A ⊎ (B ⊎ C)) → ((A ⊎ B) ⊎ C)
+    ⊎-assocʳ (inj₁ a) = inj₁ (inj₁ a)
+    ⊎-assocʳ (inj₂ (inj₁ b)) = inj₁ (inj₂ b)
+    ⊎-assocʳ (inj₂ (inj₂ c)) = inj₂ c
+\end{code}
+
 #### Exercise `⊥-identityˡ` (recommended)
 
 Show zero is the left identity of addition.
+
+\begin{code}
+⊥-identityˡ : ∀ {A : Set} → (⊥ ⊎ A) ⇔ A
+⊥-identityˡ = record { to =  ⊥-identityˡˡ ; from =  ⊥-identityˡʳ }
+  where
+    ⊥-identityˡˡ : ∀ {A : Set} → (⊥ ⊎ A) → A
+    ⊥-identityˡˡ (inj₁ ())
+    ⊥-identityˡˡ (inj₂ a) = a
+
+    ⊥-identityˡʳ : ∀ {A : Set} → A → (⊥ ⊎ A)
+    ⊥-identityˡʳ a = inj₂ a
+\end{code}
 
 #### Exercise `⊥-identityʳ`
 
 Show zero is the right identity of addition. 
 
+
+\begin{code}
+⊥-identityʳ : ∀ {A : Set} → (A ⊎ ⊥) ⇔ A
+⊥-identityʳ = record { to =  ⊥-identityʳˡ ; from =  ⊥-identityʳʳ }
+  where
+    ⊥-identityʳˡ : ∀ {A : Set} → (A ⊎ ⊥) → A
+    ⊥-identityʳˡ (inj₁ a) = a
+    ⊥-identityʳˡ (inj₂ ())
+
+    ⊥-identityʳʳ : ∀ {A : Set} → A → (A ⊎ ⊥)
+    ⊥-identityʳʳ a = inj₁ a
+\end{code}
+
 #### Exercise `⊎-weak-×` (recommended)
 
 Show that the following property holds.
 \begin{code}
-postulate
-  ⊎-weak-× : ∀ {A B C : Set} → (A ⊎ B) × C → A ⊎ (B × C)
+⊎-weak-× : ∀ {A B C : Set} → (A ⊎ B) × C → A ⊎ (B × C)
+⊎-weak-× ⟨ inj₁ a , _ ⟩ = inj₁ a
+⊎-weak-× ⟨ inj₂ b , c ⟩ = inj₂ ⟨ b , c ⟩
+
 \end{code}
 This is called a _weak distributive law_. Give the corresponding
 distributive law, and explain how it relates to the weak version.
@@ -200,11 +242,12 @@ distributive law, and explain how it relates to the weak version.
 
 Show that a disjunct of conjuncts implies a conjunct of disjuncts.
 \begin{code}
-postulate
-  ⊎×-implies-×⊎ : ∀ {A B C D : Set} → (A × B) ⊎ (C × D) → (A ⊎ C) × (B ⊎ D)
+⊎×-implies-×⊎ : ∀ {A B C D : Set} → (A × B) ⊎ (C × D) → (A ⊎ C) × (B ⊎ D)
+⊎×-implies-×⊎ (inj₁ ⟨ a , b ⟩) = ⟨ inj₁ a , inj₁ b ⟩
+⊎×-implies-×⊎ (inj₂ ⟨ c , d ⟩) = ⟨ inj₂ c , inj₂ d ⟩
 \end{code}
-Does the converse hold? If so, prove; if not, give a counterexample.
 
+Does the converse hold? If so, prove; if not, give a counterexample.
 
 ## Negation
 
