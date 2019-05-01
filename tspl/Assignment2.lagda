@@ -8,7 +8,11 @@ permalink : /Assignment2/
 module Assignment2 where
 \end{code}
 
-## YOUR NAME AND EMAIL GOES HERE
+## Name
+Guilherme Horta Alvares da Silva
+
+## Email
+guilhermehas@hotmail.com
 
 ## Introduction
 
@@ -63,7 +67,22 @@ notation for `≡-reasoning`.  Define `≤-reasoning` analogously, and use
 it to write out an alternative proof that addition is monotonic with
 regard to inequality.  Rewrite both `+-monoˡ-≤` and `+-mono-≤`.
 
+\begin{code}
+module ≤-Reasoning where
 
+  infixr 2 _≤⟨⟩_ _≤⟨_⟩_
+  infix  1 begin≤_
+
+  begin≤_ : ∀ {x y : ℕ} → x ≡ y → x ≡ y
+  begin≤_ eq = eq
+
+  _≤⟨⟩_ : ∀ (x {y} : ℕ) → x ≤ y → x ≤ y
+  _ ≤⟨⟩ x≤y = x≤y
+
+  _≤⟨_⟩_ : ∀ (x {y z} : ℕ) → x ≤ y → y ≤ z → x ≤ z
+  _ ≤⟨ x≤y ⟩ y≤z = ≤-trans x≤y y≤z
+
+\end{code}
 
 ## Isomorphism
 
@@ -71,11 +90,12 @@ regard to inequality.  Rewrite both `+-monoˡ-≤` and `+-mono-≤`.
 
 Show that every isomorphism implies an embedding.
 \begin{code}
-postulate
-  ≃-implies-≲ : ∀ {A B : Set}
-    → A ≃ B
-      -----
-    → A ≲ B  
+≃-implies-≲ : ∀ {A B : Set}
+  → A ≃ B
+    -----
+  → A ≲ B  
+
+≃-implies-≲ record { to = to ; from = from ; from∘to = from∘to ; to∘from = to∘from } = record { to = to ; from = from ; from∘to = from∘to }
 \end{code}
 
 #### Exercise `_⇔_` (recommended) {#iff}
@@ -88,6 +108,9 @@ record _⇔_ (A B : Set) : Set where
     from : B → A
 
 open _⇔_
+
+if_onlyif_ : ∀ (A B : Set) → Set
+if A onlyif B = A ⇔ B
 \end{code}
 Show that equivalence is reflexive, symmetric, and transitive.
 
@@ -115,6 +138,10 @@ which satisfy the following property:
 Using the above, establish that there is an embedding of `ℕ` into `Bin`.
 Why is there not an isomorphism?
 
+```
+  There are not two different naturals that is represented by same binary number. So from (to n) ≡ n.
+  But two binary represent can represent the same number. For exemple from (x1 x0 nil) ≡ from (x1 nil) ≡ 1 . x1 nil ≡ to (from (x1 nil)) ≡ to (from (x1 x0 nil)) ≠ x1 x0 nil
+```
 
 ## Connectives
 
@@ -123,9 +150,29 @@ Why is there not an isomorphism?
 Show that `A ⇔ B` as defined [earlier][plfa.Isomorphism#iff]
 is isomorphic to `(A → B) × (B → A)`.
 
+\begin{code}
+⇔≃×ˡ : ∀ {A B : Set} → (A ⇔ B) → ((A → B) × (B → A))
+⇔≃×ˡ record { to = to ; from = from } = ⟨ to , from ⟩
+
+⇔≃×ʳ : ∀ {A B : Set} → ((A → B) × (B → A)) → (A ⇔ B)
+⇔≃×ʳ ⟨ fst , snd ⟩ = record { to = fst ; from = snd }
+
+⇔≃× : ∀ {A B : Set} → (A ⇔ B) ⇔ ((A → B) × (B → A))
+⇔≃× = record { to = ⇔≃×ˡ ; from =  ⇔≃×ʳ }
+\end{code}
+
 #### Exercise `⊎-comm` (recommended)
 
 Show sum is commutative up to isomorphism.
+
+\begin{code}
+⊎-commˡ : ∀ {A B : Set} → (A ⊎ B) → (B ⊎ A)
+⊎-commˡ (inj₁ x) = inj₂ x
+⊎-commˡ (inj₂ y) = inj₁ y
+
+⊎-comm : ∀ {A B : Set} → (A ⊎ B) ⇔ (B ⊎ A)
+⊎-comm = record { to = ⊎-commˡ ; from = ⊎-commˡ }
+\end{code}
 
 #### Exercise `⊎-assoc`
 
