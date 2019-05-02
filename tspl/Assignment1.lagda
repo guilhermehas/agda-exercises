@@ -192,19 +192,17 @@ Confirm that these both give the correct answer for zero through four.
 
 \begin{code}
 inc : Bin → Bin
-inc nil = nil
-inc (x0 n) = x1_ n
-inc (x1 nil) = x0 x1 nil
-inc (x1 (x0 n)) = x0 x1 (inc n)
-inc (x1 (x1 n)) = x0 (inc (x1 n))
+inc nil = x0 nil
+inc (x0 n) = x1 n
+inc (x1 n) = x0 (inc n)
 
 from : Bin → ℕ
 from nil = 0
-from (x0 n) = 2 * from n
-from (x1 n) = 2 * from n + 1
+from (x0 n) = 2 * from n + 1
+from (x1 n) = 2 * from n + 2
 
 to : ℕ → Bin
-to zero = x0_ nil
+to zero = nil
 to (suc n) = inc (to n)
 \end{code}
 
@@ -432,36 +430,83 @@ over bitstrings.
 For each law: if it holds, prove; if not, give a counterexample.
 
 \begin{code}
-exampleNotToFrom : to (from (x0 x0 nil)) ≡ (x0 x0 nil) → ⊥
-exampleNotToFrom ()
+-- exampleNotToFrom : to (from (x0 x0 nil)) ≡ (x0 x0 nil) → ⊥
+-- exampleNotToFrom ()
+postulate
+  solve¹ : ∀ (n : ℕ) → n + (n + zero) + 2 ≡ suc (n + (n + zero) + 1)
+  solve² : ∀ (n : ℕ) → n + suc (n + zero) + 1 ≡ n + (n + zero) + 2
+  solve³ : ∀ (n : ℕ) → n + (n + zero) + 1 ≡ suc (2 * n)
+  solve⁴ : ∀ (n : ℕ) → n + (suc (suc n)) ≡ suc n + suc n
+  solve⁵ : ∀ (n : ℕ) → n + (n + zero) + 2 ≡ suc (suc (n + n))
 
-inc-nil : ∀ {b : Bin} → inc b ≡ nil → b ≡ nil
-inc-nil {nil} refl = refl
-inc-nil {x0 b} ()
-inc-nil {x1 nil} ()
-inc-nil {x1 (x0 b)} ()
-inc-nil {x1 (x1 b)} ()
+toℕ-suc : ∀ b → from (inc b) ≡ suc (from b)
+toℕ-suc nil    = refl
+toℕ-suc (x0 b) = solve¹ (from b)
+toℕ-suc (x1 b) = 
+  begin
+    from (inc b) + (from (inc b) + zero) + 1
+  ≡⟨ cong (λ x → x + (x + zero) + 1) (toℕ-suc b) ⟩
+    suc (from b + suc (from b + zero) + 1)
+  ≡⟨ cong suc (solve² (from b)) ⟩
+    suc (from b + (from b + zero) + 2)
+  ≡⟨⟩
+    suc (from (x1 b))
+  ∎
 
-to-nil-absurd : ∀ {b : Bin} {n : ℕ} → b ≡ to n → b ≡ nil → ⊥
-to-nil-absurd {.(x0 nil)} {zero} refl ()
-to-nil-absurd {.(inc (to n))} {suc n} refl eq = to-nil-absurd {to n} {n} refl (inc-nil {to n} eq)
+from-to : ∀ n → from (to n) ≡ n
+from-to zero = refl
+from-to (suc n) = 
+  begin
+    from (inc (to n))
+  ≡⟨ toℕ-suc (to n) ⟩
+    suc (from (to n))
+  ≡⟨ cong suc (from-to n) ⟩
+    suc n
+  ∎
 
-≡-suc-right : ∀ {m : ℕ} → m + 1 ≡ suc m
-≡-suc-right {zero} = refl
-≡-suc-right {suc m} = cong suc ≡-suc-right
+toB-suc : ∀ n → to (suc n) ≡ inc (to n)
+toB-suc zero = refl
+toB-suc (suc n) = cong inc (cong inc refl)
 
-nat-inj-helper : ∀ {x : Bin} {n : ℕ} → x ≡ to n →  from (inc x) ≡ suc (from x)
+inc-2n : ∀ n → inc (to (n + n)) ≡ (x0 (to n))
+inc-2n zero = refl
+inc-2n (suc zero) = refl
+inc-2n (suc (suc n)) = 
+  begin
+    inc (inc (inc (to (n + suc (suc n))))) 
+  ≡⟨ cong (λ x → inc (inc (inc (to x)))) (solve⁴ n) ⟩
+    inc (inc (inc (to (suc n + suc n))))
+  ≡⟨ cong (λ x → inc (inc x)) (inc-2n (suc n)) ⟩
+    ((x0 inc (inc (to n))))
+  ∎
 
-nat-inj-helper {nil} {zero} ()
-nat-inj-helper {nil} {suc n} eq = ⊥-elim (to-nil-absurd {_} {n} refl (inc-nil (sym eq )))
-nat-inj-helper {x0 .nil} {zero} refl = refl
-nat-inj-helper {x0 x} {suc n} eq = ≡-suc-right
-nat-inj-helper {x1 nil} {n} eq = refl
-nat-inj-helper {x1 (x0 x)} {n} eq  = {!!}
-nat-inj-helper {x1 (x1 x)} {n} eq = {!!}
+to-from : ∀ b → to (from b) ≡ b
+to-from nil = refl
+to-from (x0 b) = 
+  begin
+    to (from b + (from b + zero) + 1)
+  ≡⟨ cong to (solve³ (from b)) ⟩
+    inc (to (from b + (from b + zero))) 
+  ≡⟨ cong (λ x → inc (to x)) (cong (_+_ (from b) )(+-identityʳ (from b))) ⟩
+    inc (to (from b + from b))
+  ≡⟨ inc-2n (from b) ⟩
+    ((x0 to (from b)) )
+  ≡⟨ cong x0_ (to-from b) ⟩
+    (x0 b)
+  ∎
 
-natInject : ∀ (n : ℕ) → from (to n) ≡ n
-natInject n = {!!}
+to-from (x1 b) = 
+  begin
+    to (from b + (from b + zero) + 2) 
+  ≡⟨ cong (λ x → to x) (solve⁵ (from b)) ⟩
+      to (suc (suc (from b + from b)))
+  ≡⟨ cong inc (inc-2n (from b)) ⟩
+    inc (x0 (to (from b)))
+  ≡⟨⟩
+    x1 to (from b)
+  ≡⟨ cong x1_ (to-from b) ⟩
+  (x1 b)
+  ∎
 \end{code}
 
 ## Relations
@@ -699,22 +744,22 @@ data Can where
   zero : Can (x0 nil)
   one : {n : Bin} → One n → Can n
 
-getOne : {n : Bin} → Can (inc n) → One (inc n)
-getOne {nil} (one x) = x
-getOne {x0 n} (one x) = x
-getOne {x1 nil} (one x) = x
-getOne {x1 (x0 n)} (one x) = x
-getOne {x1 (x1 nil)} (one x) = x
-getOne {x1 (x1 (x0 n))} (one x) = x
-getOne {x1 (x1 (x1 n))} (one x) = x
+-- getOne : {n : Bin} → Can (inc n) → One (inc n)
+-- getOne {nil} (one x) = x
+-- getOne {x0 n} (one x) = x
+-- getOne {x1 nil} (one x) = x
+-- getOne {x1 (x0 n)} (one x) = x
+-- getOne {x1 (x1 nil)} (one x) = x
+-- getOne {x1 (x1 (x0 n))} (one x) = x
+-- getOne {x1 (x1 (x1 n))} (one x) = x
 
-canInc : {n : Bin} → Can n → Can (inc n)
-canInc {.(x0 nil)} zero = one one
-canInc {.(x1 nil)} (one one) = one (x0 one)
-canInc {.(x0 _)} (one (x0 x)) = one (x1 x)
-canInc {.(x1 (x1 nil))} (one (x1 one)) = one (x0 (x0 one))
-canInc {(x1 (x0 n))} (one (x1 (x0 x))) with getOne (canInc (one x))
-... | one1 = one (x0 (x1 one1))
-canInc {.(x1 (x1 _))} (one (x1 (x1 x))) with getOne (canInc (one (x1 x)))
-... | one1 = one (x0 one1)
+-- canInc : {n : Bin} → Can n → Can (inc n)
+-- canInc {.(x0 nil)} zero = one one
+-- canInc {.(x1 nil)} (one one) = one (x0 one)
+-- canInc {.(x0 _)} (one (x0 x)) = one (x1 x)
+-- canInc {.(x1 (x1 nil))} (one (x1 one)) = one (x0 (x0 one))
+-- canInc {(x1 (x0 n))} (one (x1 (x0 x))) with getOne (canInc (one x))
+-- ... | one1 = one (x0 (x1 one1))
+-- canInc {.(x1 (x1 _))} (one (x1 (x1 x))) with getOne (canInc (one (x1 x)))
+-- ... | one1 = one (x0 one1)
 \end{code}
