@@ -430,8 +430,6 @@ over bitstrings.
 For each law: if it holds, prove; if not, give a counterexample.
 
 \begin{code}
--- exampleNotToFrom : to (from (x0 x0 nil)) ≡ (x0 x0 nil) → ⊥
--- exampleNotToFrom ()
 postulate
   solve¹ : ∀ (n : ℕ) → n + (n + zero) + 2 ≡ suc (n + (n + zero) + 1)
   solve² : ∀ (n : ℕ) → n + suc (n + zero) + 1 ≡ n + (n + zero) + 2
@@ -585,9 +583,9 @@ similar to that used for totality.
 
 \begin{code}
 data Ordering : ℕ → ℕ → Set where
-  less : {m n : ℕ} → .(m < n) → Ordering m n
-  equal : {m n : ℕ} → .(m ≡ n) → Ordering m n
-  greater : {m n : ℕ} → .(n < m) → Ordering m n
+  less : {m n : ℕ} → (m < n) → Ordering m n
+  equal : {m n : ℕ} → (m ≡ n) → Ordering m n
+  greater : {m n : ℕ} → (n < m) → Ordering m n
 
 ≡-same : ∀ {m n : ℕ} → m ≡ n → n ≡ m
 ≡-same refl = refl
@@ -599,16 +597,20 @@ data Ordering : ℕ → ℕ → Set where
 <->-disjoint z<s ()
 <->-disjoint (s<s m<n) (s<s n<m) = <->-disjoint m<n n<m
 
+<-unique : ∀ {m n : ℕ} → (x : m < n) → (y : m < n) → x ≡ y
+<-unique z<s z<s = refl
+<-unique (s<s x) (s<s y) = cong s<s (<-unique x y)
+
 trichotomy : ∀ {m n : ℕ} → (x : Ordering m n) → (y : Ordering m n) → x ≡ y
-trichotomy (less x) (less y) = refl
+trichotomy (less x) (less y) = cong less (<-unique x y)
 trichotomy (less x) (equal y) = ⊥-elim (<-≡-disjoint x y)
 trichotomy (less x) (greater y) = ⊥-elim  (<->-disjoint x y)
 trichotomy (equal x) (less y) = ⊥-elim  (<-≡-disjoint y x)
-trichotomy (equal x) (equal y) = refl
+trichotomy (equal x) (equal y) = {!!}
 trichotomy (equal x) (greater y) = ⊥-elim  (<-≡-disjoint y (≡-same x))
 trichotomy (greater x) (less y) = ⊥-elim  (<->-disjoint y x)
 trichotomy (greater x) (equal y) = ⊥-elim (<-≡-disjoint x (≡-same y))
-trichotomy (greater x) (greater y) = refl
+trichotomy (greater x) (greater y) = {!!}
 \end{code}
 
 #### Exercise `+-mono-<` {#plus-mono-less}

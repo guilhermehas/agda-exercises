@@ -257,6 +257,10 @@ Using negation, show that
 [strict inequality][plfa.Relations#strict-inequality]
 is irreflexive, that is, `n < n` holds for no `n`.
 
+\begin{code}
+<-irreflexive : ∀ n → ¬ (n < n)
+<-irreflexive (suc n) (s<s n<n) = <-irreflexive n n<n
+\end{code}
 
 #### Exercise `trichotomy`
 
@@ -270,6 +274,41 @@ that is, for any naturals `m` and `n` exactly one of the following holds:
 
 Here "exactly one" means that one of the three must hold, and each implies the
 negation of the other two.
+
+\begin{code}
+data Ordering : ℕ → ℕ → Set where
+  less : {m n : ℕ} → (m < n) → Ordering m n
+  equal : {m n : ℕ} → (m ≡ n) → Ordering m n
+  greater : {m n : ℕ} → (n < m) → Ordering m n
+
+≡-same : ∀ {m n : ℕ} → m ≡ n → n ≡ m
+≡-same refl = refl
+
+<-≡-disjoint : ∀ {m n} → (m < n) → (m ≡ n) → ⊥
+<-≡-disjoint (s<s m<n) refl = <-≡-disjoint m<n refl
+
+<->-disjoint : ∀ {m n} → (m < n) → (n < m) → ⊥
+<->-disjoint z<s ()
+<->-disjoint (s<s m<n) (s<s n<m) = <->-disjoint m<n n<m
+
+<-unique : ∀ {m n : ℕ} → (x : m < n) → (y : m < n) → x ≡ y
+<-unique z<s z<s = refl
+<-unique (s<s x) (s<s y) = cong s<s (<-unique x y)
+
+≡-unique : ∀ {m n : ℕ} → (x : m ≡ n) → (y : m ≡ n) → x ≡ y
+≡-unique refl refl = refl
+
+trichotomy : ∀ {m n : ℕ} → (x : Ordering m n) → (y : Ordering m n) → x ≡ y
+trichotomy (less x) (less y) = cong less (<-unique x y)
+trichotomy (less x) (equal y) = ⊥-elim (<-≡-disjoint x y)
+trichotomy (less x) (greater y) = ⊥-elim  (<->-disjoint x y)
+trichotomy (equal x) (less y) = ⊥-elim  (<-≡-disjoint y x)
+trichotomy (equal x) (equal y) = cong equal (≡-unique x y)
+trichotomy (equal x) (greater y) = ⊥-elim  (<-≡-disjoint y (≡-same x))
+trichotomy (greater x) (less y) = ⊥-elim  (<->-disjoint y x)
+trichotomy (greater x) (equal y) = ⊥-elim (<-≡-disjoint x (≡-same y))
+trichotomy (greater x) (greater y) = cong greater (<-unique x y)
+\end{code}
 
 
 #### Exercise `⊎-dual-×` (recommended)
@@ -286,7 +325,28 @@ Do we also have the following?
     ¬ (A × B) ≃ (¬ A) ⊎ (¬ B)
 
 If so, prove; if not, give a variant that does hold.
+\begin{code}
+⊎-dual-×-to : ∀ {A B : Set} → ¬ (A ⊎ B) → (¬ A) × (¬ B)
+⊎-dual-×-to ¬ab = ⟨ (λ a → ¬ab (inj₁ a)) , (λ b → ¬ab (inj₂ b)) ⟩
 
+⊎-dual-×-from : ∀ {A B : Set} → (¬ A) × (¬ B) → ¬ (A ⊎ B)
+⊎-dual-×-from ⟨ ¬a , _ ⟩ (inj₁ a) = ¬a a
+⊎-dual-×-from ⟨ _ , ¬b ⟩ (inj₂ b) = ¬b b
+
+⊎-dual-×-from∘to : ∀ {A B : Set} (¬a⊎b : ¬ (A ⊎ B)) → ⊎-dual-×-from (⊎-dual-×-to ¬a⊎b) ≡ ¬a⊎b
+⊎-dual-×-from∘to ¬a⊎b = extensionality λ a⊎b → ⊥-elim (¬a⊎b a⊎b) 
+
+⊎-dual-×-to∘from : ∀ {A B : Set} (x : (¬ A) × (¬ B)) → ⊎-dual-×-to (⊎-dual-×-from x) ≡ x
+⊎-dual-×-to∘from _ = refl
+
+⊎-dual-× : ∀ {A B : Set} → ¬ (A ⊎ B) ≃ (¬ A) × (¬ B)
+⊎-dual-× = record {
+  to = ⊎-dual-×-to ;
+  from =  ⊎-dual-×-from ; 
+  from∘to = ⊎-dual-×-from∘to ;
+  to∘from = ⊎-dual-×-to∘from
+  }
+\end{code}
 
 #### Exercise `Classical` (stretch)
 
@@ -300,59 +360,133 @@ Consider the following principles.
 
 Show that each of these implies all the others.
 
+\begin{code}
+postulate
+  exclude-middle : ∀ {A : Set} → A ⊎ ¬ A
+
+⊎-elim : ∀ {A B C : Set} → (A ⊎ B) → (A → C) → (B → C) → C
+⊎-elim (inj₁ a) ac _ = ac a
+⊎-elim (inj₂ b) _ bc = bc b
+
+to-dec : (A : Set) → Dec A
+to-dec a = ⊎-elim exclude-middle (λ z → z) λ z → no (λ z₁ → z (yes z₁))
+
+double-negation : ∀ {A : Set} → ¬ ¬ A → A
+double-negation {a} with to-dec a
+double-negation | yes a = λ _ → a
+double-negation | no ¬a = λ ¬¬a → ⊥-elim (¬¬a ¬a)
+
+pierce-law : ∀ {A B : Set} → ((A → B) → A) → A
+pierce-law {a} {b} f with to-dec a
+pierce-law _ | yes a = a
+pierce-law {a} {b} f | no ¬p with to-dec b
+pierce-law f | no ¬a | yes b = f (λ _ → b)
+pierce-law f | no ¬a | no ¬b = f λ a → ⊥-elim (¬a a)
+
+imp-disj : ∀ {A B : Set} → (A → B) → ¬ A ⊎ B
+imp-disj {a} {b} ab with to-dec a
+imp-disj ab | yes p = inj₂ (ab p)
+imp-disj ab | no ¬p = inj₁ ¬p
+
+de-morgan : ∀ {A B : Set} → ¬ (¬ A × ¬ B) → A ⊎ B
+de-morgan {a} {_} ab with to-dec a
+de-morgan ab | yes a = inj₁ a
+de-morgan {_} {b} ab | no ¬p with to-dec b
+de-morgan ab | no ¬a | yes b = inj₂ b
+de-morgan ab | no ¬a | no ¬b = ⊥-elim (ab ⟨ ¬a , ¬b ⟩)
+\end{code}
+
 
 #### Exercise `Stable` (stretch)
 
 Say that a formula is _stable_ if double negation elimination holds for it.
 \begin{code}
 Stable : Set → Set
-Stable A = ¬ ¬ A → A
+Stable A = (¬ ¬ A) → A
 \end{code}
 Show that any negated formula is stable, and that the conjunction
 of two stable formulas is stable.
 
+-- from-stable : ∀ {A : Set} → Stable A → (¬ (¬ A)) → A)
+-- from-stable s = ?
+
+\begin{code}
+neg-stable : ∀ {A : Set} → Stable (¬ A)
+neg-stable f a = f (λ z → z a)
+
+×-stable : ∀ {A B : Set} → Stable A → Stable B → Stable (A × B)
+×-stable sa sb sa×b = ⟨ sa (λ z → sa×b (λ z₁ → z (proj₁ z₁))) , sb (λ z → sa×b (λ z₁ → z (proj₂ z₁))) ⟩
+\end{code}
 
 ## Quantifiers
 
 #### Exercise `∀-distrib-×` (recommended)
 
 Show that universals distribute over conjunction.
-\begin{code}
-postulate
-  ∀-distrib-× : ∀ {A : Set} {B C : A → Set} →
-    (∀ (x : A) → B x × C x) ≃ (∀ (x : A) → B x) × (∀ (x : A) → C x)
-\end{code}
 Compare this with the result (`→-distrib-×`) in
 Chapter [Connectives][plfa.Connectives].
+
+\begin{code}
+∀-distrib-× : ∀ {A : Set} {B C : A → Set} →
+  (∀ (x : A) → B x × C x) ≃ (∀ (x : A) → B x) × (∀ (x : A) → C x)
+∀-distrib-× = record {
+  to = λ f → ⟨ (λ a → proj₁ (f a)) , (λ a → proj₂ (f a)) ⟩ ;
+  from = λ f a → ⟨ (proj₁ f a) , (proj₂ f a) ⟩ ;
+  from∘to = λ x → refl ;
+  to∘from = λ y → refl
+  }
+\end{code}
 
 #### Exercise `⊎∀-implies-∀⊎`
 
 Show that a disjunction of universals implies a universal of disjunctions.
-\begin{code}
-postulate
-  ⊎∀-implies-∀⊎ : ∀ {A : Set} { B C : A → Set } →
-    (∀ (x : A) → B x) ⊎ (∀ (x : A) → C x)  →  ∀ (x : A) → B x ⊎ C x
-\end{code}
 Does the converse hold? If so, prove; if not, explain why.
+
+\begin{code}
+⊎∀-implies-∀⊎ : ∀ {A : Set} { B C : A → Set } →
+  (∀ (x : A) → B x) ⊎ (∀ (x : A) → C x)  →  ∀ (x : A) → B x ⊎ C x
+⊎∀-implies-∀⊎ f a = ⊎-elim f (λ x → inj₁ (x a)) λ z → inj₂ (z a)
+\end{code}
 
 #### Exercise `∃-distrib-⊎` (recommended)
 
 Show that existentials distribute over disjunction.
+
 \begin{code}
-postulate
-  ∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
-    ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
+∃-elim : ∀ {A : Set} {B : A → Set} {C : Set}
+  → (∀ x → B x → C)
+  → ∃[ x ] B x
+  ---------------
+  → C
+∃-elim f ⟨ x , y ⟩ = f x y
+
+∃-intro : ∀ {A : Set} {B : A → Set} {C : A → Set}
+  → ∃[ x ] B x
+  → (∀ x → B x → C x)
+  ---------------
+  → ∃[ x ] C x
+∃-intro ∃bx f = ∃-elim (λ x z → ⟨ x , f x z ⟩) ∃bx
+
+-- ∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
+--   ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
+-- ∃-distrib-⊎ = record {
+--   to = λ y → ∃-elim (λ a B⊎C → ⊎-elim B⊎C (λ Ba → inj₁ ⟨ a , Ba ⟩) λ z → inj₂ ⟨ a , z ⟩) y ;
+--   from = λ B⊎C → ⊎-elim B⊎C (λ ∃B → ∃-elim (λ x x₁ → ⟨ x , inj₁ x₁ ⟩) ∃B) λ ∃C → ∃-elim (λ x z → ⟨ x , inj₂ z ⟩) ∃C  ; 
+--   from∘to = λ x → {!!} ;
+--   to∘from = λ y → {!!}
+--   }
 \end{code}
 
 #### Exercise `∃×-implies-×∃`
 
 Show that an existential of conjunctions implies a conjunction of existentials.
-\begin{code}
-postulate
-  ∃×-implies-×∃ : ∀ {A : Set} { B C : A → Set } →
-    ∃[ x ] (B x × C x) → (∃[ x ] B x) × (∃[ x ] C x)
-\end{code}
 Does the converse hold? If so, prove; if not, explain why.
+
+\begin{code}
+∃×-implies-×∃ : ∀ {A : Set} { B C : A → Set } →
+  ∃[ x ] (B x × C x) → (∃[ x ] B x) × (∃[ x ] C x)
+∃×-implies-×∃ f = ⟨ (∃-intro f (λ x x₁ → proj₁ x₁)) , (∃-intro f (λ x → proj₂)) ⟩
+\end{code}
 
 #### Exercise `∃-even-odd`
 
@@ -368,15 +502,15 @@ Show that `y ≤ z` holds if and only if there exists a `x` such that
 #### Exercise `∃¬-implies-¬∀` (recommended)
 
 Show that existential of a negation implies negation of a universal.
-\begin{code}
-postulate
-  ∃¬-implies-¬∀ : ∀ {A : Set} {B : A → Set}
-    → ∃[ x ] (¬ B x)
-      --------------
-    → ¬ (∀ x → B x)
-\end{code}
 Does the converse hold? If so, prove; if not, explain why.
 
+\begin{code}
+∃¬-implies-¬∀ : ∀ {A : Set} {B : A → Set}
+  → ∃[ x ] (¬ B x)
+  --------------
+  → ¬ (∀ x → B x)
+∃¬-implies-¬∀ f = ∃-elim (λ x x₁ x₂ → x₁ (x₂ x)) f
+\end{code}
 
 #### Exercise `Bin-isomorphism` (stretch) {#Bin-isomorphism}
 
@@ -418,16 +552,32 @@ Using the above, establish that there is an isomorphism between `ℕ` and
 
 Analogous to the function above, define a function to decide strict inequality.
 \begin{code}
-postulate
-  _<?_ : ∀ (m n : ℕ) → Dec (m < n)
+suc-inv : ∀ {m n : ℕ} → suc m < suc n → m < n
+suc-inv (s<s smsn) = smsn
+
+_<?_ : ∀ (m n : ℕ) → Dec (m < n)
+zero <? zero = no λ ()
+zero <? suc n = yes z<s
+suc m <? zero = no (λ ())
+suc m <? suc n with m <? n
+(suc m <? suc n) | yes p = yes (s<s p)
+(suc m <? suc n) | no ¬p = no λ sm<sn → ⊥-elim (¬p (suc-inv sm<sn))
 \end{code}
 
 #### Exercise `_≡ℕ?_`
 
 Define a function to decide whether two naturals are equal.
 \begin{code}
-postulate
-  _≡ℕ?_ : ∀ (m n : ℕ) → Dec (m ≡ n)
+_≡ℕ?_ : ∀ (m n : ℕ) → Dec (m ≡ n)
+zero ≡ℕ? zero = yes refl
+zero ≡ℕ? suc n = no (λ ())
+suc m ≡ℕ? zero = no (λ ())
+suc m ≡ℕ? suc n with m ≡ℕ? n
+(suc m ≡ℕ? suc .m) | yes refl = yes refl
+(suc m ≡ℕ? suc n) | no ¬p = no λ sm≡sn → ¬p (cong-inv sm≡sn)
+  where
+    cong-inv : ∀ {m n : ℕ} → suc m ≡ suc n → m ≡ n
+    cong-inv refl = refl
 \end{code}
 
 
@@ -447,9 +597,21 @@ Give analogues of the `_⇔_` operation from
 Chapter [Isomorphism][plfa.Isomorphism#iff],
 operation on booleans and decidables, and also show the corresponding erasure.
 \begin{code}
-postulate
-  _iff_ : Bool → Bool → Bool
-  _⇔-dec_ : ∀ {A B : Set} → Dec A → Dec B → Dec (A ⇔ B)
-  iff-⇔ : ∀ {A B : Set} (x : Dec A) (y : Dec B) → ⌊ x ⌋ iff ⌊ y ⌋ ≡ ⌊ x ⇔-dec y ⌋  
+_iff_ : Bool → Bool → Bool
+false iff false = true
+false iff true = false
+true iff b = b
+
+_⇔-dec_ : ∀ {A B : Set} → Dec A → Dec B → Dec (A ⇔ B)
+yes p ⇔-dec yes p₁ = yes (record { to = λ _ → p₁ ; from = λ _ → p })
+yes p ⇔-dec no ¬p = no (λ z → ¬p (to z p))
+no ¬p ⇔-dec yes p = no (λ z → ¬p (from z p))
+no ¬p ⇔-dec no ¬p₁ = yes (record { to = λ x → ⊥-elim (¬p x) ; from = λ x → ⊥-elim (¬p₁ x) })
+
+iff-⇔ : ∀ {A B : Set} (x : Dec A) (y : Dec B) → ⌊ x ⌋ iff ⌊ y ⌋ ≡ ⌊ x ⇔-dec y ⌋  
+iff-⇔ (yes p) (yes p₁) = refl
+iff-⇔ (yes p) (no ¬p) = refl
+iff-⇔ (no ¬p) (yes p) = refl
+iff-⇔ (no ¬p) (no ¬p₁) = refl
 \end{code}
 
