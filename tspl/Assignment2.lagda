@@ -36,7 +36,7 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; cong; sym)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _≡⟨_⟩_; _∎)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _∸_; _≤_; z≤n; s≤s)
-open import Data.Nat.Properties using (+-assoc; +-identityʳ; +-suc; +-comm;
+open import Data.Nat.Properties using (+-assoc; +-identityʳ; +-suc; +-comm; *-comm;
   ≤-refl; ≤-trans; ≤-antisym; ≤-total; +-monoʳ-≤; +-monoˡ-≤; +-mono-≤)
 open import plfa.Relations using (_<_; z<s; s<s)
 open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
@@ -241,13 +241,13 @@ distributive law, and explain how it relates to the weak version.
 #### Exercise `⊎×-implies-×⊎`
 
 Show that a disjunct of conjuncts implies a conjunct of disjuncts.
+Does the converse hold? If so, prove; if not, give a counterexample.
+
 \begin{code}
 ⊎×-implies-×⊎ : ∀ {A B C D : Set} → (A × B) ⊎ (C × D) → (A ⊎ C) × (B ⊎ D)
 ⊎×-implies-×⊎ (inj₁ ⟨ a , b ⟩) = ⟨ inj₁ a , inj₁ b ⟩
 ⊎×-implies-×⊎ (inj₂ ⟨ c , d ⟩) = ⟨ inj₂ c , inj₂ d ⟩
 \end{code}
-
-Does the converse hold? If so, prove; if not, give a counterexample.
 
 ## Negation
 
@@ -407,9 +407,6 @@ Stable A = (¬ ¬ A) → A
 Show that any negated formula is stable, and that the conjunction
 of two stable formulas is stable.
 
--- from-stable : ∀ {A : Set} → Stable A → (¬ (¬ A)) → A)
--- from-stable s = ?
-
 \begin{code}
 neg-stable : ∀ {A : Set} → Stable (¬ A)
 neg-stable f a = f (λ z → z a)
@@ -494,10 +491,100 @@ How do the proofs become more difficult if we replace `m * 2` and `1 + m * 2`
 by `2 * m` and `2 * m + 1`?  Rewrite the proofs of `∃-even` and `∃-odd` when
 restated in this way.
 
+\begin{code}
+eq² : ∀ {m} → suc (m + suc (m + zero)) ≡ m + suc (m + zero) + 1
+eq² {m} = 
+  begin
+    suc (m + suc (m + zero))
+   ≡⟨ +-comm 1 (m + suc (m + zero)) ⟩
+     m + suc (m + zero) + 1
+   ∎
+
+eq¹ : ∀ {m} → suc (m + suc (m + zero))  ≡ m + suc (suc (m + zero))
+eq¹ {m} = 
+  begin
+    suc (m + suc (m + zero))
+  ≡⟨ +-comm 1 (m + suc (m + zero)) ⟩
+    m + suc (m + zero) + 1
+  ≡⟨ +-assoc m (suc (m + zero)) 1 ⟩
+    m + suc (m + zero + 1)
+  ≡⟨ cong (λ x → m + suc x) (+-comm (m + zero) 1) ⟩
+    m + suc (suc (m + zero))
+   ∎
+
+eq³ : ∀ {m} → suc (m * 2) ≡ m + (m + zero) + 1
+eq³ {m} = begin
+    suc (m * 2)
+  ≡⟨ +-comm 1 (m * 2) ⟩
+  m * 2 + 1
+  ≡⟨ cong (λ x → x + 1) (
+  begin
+  m * 2
+  ≡⟨ *-comm m 2 ⟩
+  m + (m + zero)
+  ∎
+  ) ⟩
+    m + (m + zero) + 1
+  ∎
+
+data even : ℕ → Set
+data odd  : ℕ → Set
+
+data even where
+
+  even-zero : even zero
+
+  even-suc : ∀ {n : ℕ}
+    → odd n
+    ------------
+    → even (suc n)
+
+data odd where
+  odd-suc : ∀ {n : ℕ}
+    → even n
+    -----------
+    → odd (suc n)
+
+∃-even¹ : ∀ {n : ℕ} → ∃[ m ] (    m * 2 ≡ n) → even n
+∃-odd¹  : ∀ {n : ℕ} → ∃[ m ] (1 + m * 2 ≡ n) →  odd n
+
+∃-even¹ ⟨  zero , refl ⟩  =  even-zero
+∃-even¹ ⟨ suc m , refl ⟩  =  even-suc (∃-odd¹ ⟨ m , refl ⟩)
+
+∃-odd¹  ⟨     m , refl ⟩  =  odd-suc (∃-even¹ ⟨ m , refl ⟩)
+
+
+∃-even : ∀ {n : ℕ} → ∃[ m ] ( 2 * m  ≡ n) → even n
+∃-odd  : ∀ {n : ℕ} → ∃[ m ] ( 2 * m + 1  ≡ n) → odd n
+
+∃-even ⟨ m , refl ⟩ = ∃-even¹ ⟨ m , *-comm m 2 ⟩
+
+∃-odd ⟨ m , refl ⟩ = ∃-odd¹ ⟨ m , eq³ {m} ⟩
+\end{code}
+
 #### Exercise `∃-+-≤`
 
 Show that `y ≤ z` holds if and only if there exists a `x` such that
 `x + y ≡ z`.
+
+\begin{code}
+∃-+-≤-suc : ∀ {y z : ℕ} → (∃[ x ] (x + y ≡ z)) → ∃[ x ] (suc x + y ≡ suc z)
+∃-+-≤-suc f = ∃-intro f λ x x₁ → cong suc x₁
+
+∃-+-≤ʳ : ∀ {y z : ℕ} → y ≤ z → (∃[ x ] (x + y ≡ z))
+∃-+-≤ʳ {zero} {zero} _ = ⟨ zero , refl ⟩
+∃-+-≤ʳ {zero} {suc z} z≤n =  ⟨ suc z , cong suc (+-identityʳ z) ⟩
+∃-+-≤ʳ {suc y} {(suc n)} (s≤s y≤z) = ∃-intro (∃-+-≤ʳ y≤z) λ x x+y≡n →
+  begin
+    x + suc y
+  ≡⟨ +-comm x (suc y) ⟩
+    suc (y + x)
+  ≡⟨ cong suc (+-comm y x) ⟩ 
+    suc (x + y)
+   ≡⟨ cong suc x+y≡n ⟩
+    suc n
+  ∎
+\end{code}
 
 #### Exercise `∃¬-implies-¬∀` (recommended)
 
@@ -544,6 +631,27 @@ And to establish the following properties.
 
 Using the above, establish that there is an isomorphism between `ℕ` and
 `∃[ x ](Can x)`.
+
+\begin{code}
+
+-- can-isomorph :
+--     {Can : Bin → Set}
+--   → {from : Bin → ℕ}
+--   → {to : ℕ → Bin}
+--   → {eq : {n : ℕ} → from (to n) ≡ n}
+--   → {from∘to : {n : ℕ} → Can (to n)}
+--   → {to∘from : {b : Bin} → Can b → to (from b) ≡ b}
+--   → (∃[ x ] Can x) ≃ ℕ
+-- can-isomorph {can} {from} {to} {eq} {from∘to} {to∘from} =
+--   record {
+--   to = λ f → ∃-elim (λ x _ → from x) f ;
+--   from = λ n → ⟨ (to n) , from∘to ⟩ ;
+--   from∘to = λ f → ∃-elim (λ b canb → {!!}) f ;
+--   to∘from = λ y → eq
+--   }
+
+
+\end{code}
 
 
 ## Decidable
