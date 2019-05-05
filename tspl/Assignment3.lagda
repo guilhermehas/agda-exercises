@@ -9,6 +9,8 @@ module Assignment3 where
 \end{code}
 
 ## YOUR NAME AND EMAIL GOES HERE
+Guilherme Horta Alvares da Silva
+guilhermehas@hotmail.com
 
 ## Introduction
 
@@ -34,7 +36,7 @@ open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _≡⟨_⟩_; _∎)
 open import Data.Bool.Base using (Bool; true; false; T; _∧_; _∨_; not)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _∸_; _≤_; s≤s; z≤n)
 open import Data.Nat.Properties using
-  (+-assoc; +-identityˡ; +-identityʳ; *-assoc; *-identityˡ; *-identityʳ)
+  (+-assoc; +-identityˡ; +-identityʳ; *-assoc; *-identityˡ; *-identityʳ; *-distribʳ-+; *-comm; +-comm)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Empty using (⊥; ⊥-elim)
@@ -46,8 +48,8 @@ open import plfa.Relations using (_<_; z<s; s<s)
 open import plfa.Isomorphism using (_≃_; ≃-sym; ≃-trans; _≲_; extensionality)
 open plfa.Isomorphism.≃-Reasoning
 open import plfa.Lists using (List; []; _∷_; [_]; [_,_]; [_,_,_]; [_,_,_,_];
-  _++_; reverse; map; foldr; sum; All; Any; here; there; _∈_)
-open import plfa.Lambda hiding (ƛ′_⇒_; case′_[zero⇒_|suc_⇒_]; μ′_⇒_; plus′)
+  _++_; reverse; map; foldr; sum; All; Any; here; there; _∈_; ++-assoc)
+open import plfa.Lambda hiding (begin_; _∎; ƛ′_⇒_; case′_[zero⇒_|suc_⇒_]; μ′_⇒_; plus′)
 open import plfa.Properties hiding (value?; unstuck; preserves; wttdgs)
 \end{code}
 
@@ -56,9 +58,24 @@ open import plfa.Properties hiding (value?; unstuck; preserves; wttdgs)
 Show that the reverse of one list appended to another is the
 reverse of the second appended to the reverse of the first.
 \begin{code}
-postulate
-  reverse-++-commute : ∀ {A : Set} {xs ys : List A}
-    → reverse (xs ++ ys) ≡ reverse ys ++ reverse xs
+reverse-++-commute : ∀ {A : Set} {xs ys : List A}
+  → reverse (xs ++ ys) ≡ reverse ys ++ reverse xs
+
+reverse-++-commute {_} {[]} {[]} = refl
+reverse-++-commute {_} {[]} {x ∷ ys} = list++[] (reverse ys ++ [ x ])
+  where
+    list++[] : ∀ {A : Set} (xs : List A)
+      → xs ≡ xs ++ []
+    list++[] [] = refl
+    list++[] (x ∷ xs) = cong (λ ys → x ∷ ys) (list++[] xs)
+reverse-++-commute {_} {x ∷ xs} {ys} =
+  begin
+    reverse (xs ++ ys) ++ [ x ]
+  ≡⟨ cong  (λ ys → ys ++ [ x ]) (reverse-++-commute {_} {xs} {ys}) ⟩
+    (reverse ys ++ reverse xs) ++ [ x ]
+  ≡⟨ ++-assoc (reverse ys) (reverse xs) [ x ] ⟩
+    reverse ys ++ reverse xs ++ [ x ]
+  ∎
 \end{code}
 
 #### Exercise `reverse-involutive` (recommended)
@@ -66,18 +83,31 @@ postulate
 A function is an _involution_ if when applied twice it acts
 as the identity function.  Show that reverse is an involution.
 \begin{code}
-postulate
-  reverse-involutive : ∀ {A : Set} {xs : List A}
-    → reverse (reverse xs) ≡ xs
+reverse-involutive : ∀ {A : Set} {xs : List A}
+  → reverse (reverse xs) ≡ xs
+reverse-involutive {_} {[]} = refl
+reverse-involutive {_} {x ∷ xs} = 
+  begin
+    reverse (reverse xs ++ [ x ])
+  ≡⟨ reverse-++-commute {_} {reverse xs} {[ x ]} ⟩
+    x ∷ reverse (reverse xs)
+  ≡⟨ cong (_∷_ x) reverse-involutive ⟩
+    x ∷ xs
+  ∎
 \end{code}
 
 #### Exercise `map-compose`
 
 Prove that the map of a composition is equal to the composition of two maps.
 \begin{code}
-postulate
-  map-compose : ∀ {A B C : Set} {f : A → B} {g : B → C}
-    → map (g ∘ f) ≡ map g ∘ map f
+map-compose : ∀ {A B C : Set} {f : A → B} {g : B → C}
+  → map (g ∘ f) ≡ map g ∘ map f
+map-compose = extensionality λ ys → helper ys
+  where
+    helper : ∀ {A B C : Set} {f : A → B} {g : B → C} (xs : List A)
+      → map (g ∘ f) xs ≡ (map g ∘ map f) xs
+    helper [] = refl
+    helper {_} {_} {_} {f} {g} (x ∷ xs) = cong (_∷_ (g (f x))) (helper xs)
 \end{code}
 The last step of the proof requires extensionality.
 
@@ -85,9 +115,10 @@ The last step of the proof requires extensionality.
 
 Prove the following relationship between map and append.
 \begin{code}
-postulate
-  map-++-commute : ∀ {A B : Set} {f : A → B} {xs ys : List A}
-   →  map f (xs ++ ys) ≡ map f xs ++ map f ys
+map-++-commute : ∀ {A B : Set} {f : A → B} {xs ys : List A}
+  →  map f (xs ++ ys) ≡ map f xs ++ map f ys
+map-++-commute {_} {_} {f} {[]} {ys} = refl
+map-++-commute {_} {_} {f} {x ∷ xs} {ys} = cong (_∷_ (f x)) (map-++-commute {_} {_} {f} {xs} {ys})
 \end{code}
 
 #### Exercise `map-Tree`
@@ -101,9 +132,10 @@ data Tree (A B : Set) : Set where
 \end{code}
 Define a suitabve map operator over trees.
 \begin{code}
-postulate
-  map-Tree : ∀ {A B C D : Set}
-    → (A → C) → (B → D) → Tree A B → Tree C D
+map-Tree : ∀ {A B C D : Set}
+  → (A → C) → (B → D) → Tree A B → Tree C D
+map-Tree ac bd (leaf root) = leaf (ac root)
+map-Tree ac bd (node left root right) = node (map-Tree ac bd left) (bd root) (map-Tree ac bd right)
 \end{code}
 
 #### Exercise `product` (recommended)
@@ -113,13 +145,20 @@ For example,
 
     product [ 1 , 2 , 3 , 4 ] ≡ 24
 
+\begin{code}
+product : List ℕ → ℕ
+product [] = 1
+product (x ∷ xs) = x * product xs
+\end{code}
+
 #### Exercise `foldr-++` (recommended)
 
 Show that fold and append are related as follows.
 \begin{code}
-postulate
-  foldr-++ : ∀ {A B : Set} (_⊗_ : A → B → B) (e : B) (xs ys : List A) →
-    foldr _⊗_ e (xs ++ ys) ≡ foldr _⊗_ (foldr _⊗_ e ys) xs
+foldr-++ : ∀ {A B : Set} (_⊗_ : A → B → B) (e : B) (xs ys : List A) →
+  foldr _⊗_ e (xs ++ ys) ≡ foldr _⊗_ (foldr _⊗_ e ys) xs
+foldr-++ op e [] ys = refl
+foldr-++ op e (x ∷ xs) ys = cong (op x) (foldr-++ op e xs ys)
 \end{code}
 
 
@@ -127,9 +166,14 @@ postulate
 
 Show that map can be defined using fold.
 \begin{code}
-postulate
-  map-is-foldr : ∀ {A B : Set} {f : A → B} →
-    map f ≡ foldr (λ x xs → f x ∷ xs) []
+map-is-foldr : ∀ {A B : Set} {f : A → B} →
+  map f ≡ foldr (λ x xs → f x ∷ xs) []
+map-is-foldr = extensionality λ xs → helper xs
+  where
+    helper : ∀ {A B : Set} {f : A → B}  → (xs : List A) →
+      map f xs ≡ foldr (λ x xs → f x ∷ xs) [] xs
+    helper [] = refl
+    helper {_} {_} {f} (x ∷ xs) = cong (_∷_ (f x)) (helper xs)
 \end{code}
 This requires extensionality.
 
@@ -137,9 +181,10 @@ This requires extensionality.
 
 Define a suitable fold function for the type of trees given earlier.
 \begin{code}
-postulate
-  fold-Tree : ∀ {A B C : Set}
-    → (A → C) → (C → B → C → C) → Tree A B → C
+fold-Tree : ∀ {A B C : Set}
+  → (A → C) → (C → B → C → C) → Tree A B → C
+fold-Tree ac cbc (leaf root) = ac root
+fold-Tree ac cbc (node left root right) = cbc (fold-Tree ac cbc left) root (fold-Tree ac cbc right)
 \end{code}
 
 #### Exercise `map-is-fold-Tree`
@@ -162,9 +207,40 @@ _ = refl
 Prove that the sum of the numbers `(n - 1) + ⋯ + 0` is
 equal to `n * (n ∸ 1) / 2`.
 \begin{code}
-postulate
-  sum-downFrom : ∀ (n : ℕ)
-    → sum (downFrom n) * 2 ≡ n * (n ∸ 1)
+solve¹ : ∀ (n : ℕ) → n * 2 + n * (n ∸ 1) ≡ n + n * n
+solve¹ zero = refl
+solve¹ (suc n) = cong suc (
+  begin
+      suc (n * 2 + (n + n * n))
+    ≡⟨ cong (λ x → suc (x + (n + n * n))) (*-comm n 2) ⟩
+      suc (n + (n + zero) + (n + n * n))
+    ≡⟨ cong (λ x → suc (n + x + (n + n * n))) (+-comm n zero) ⟩
+      suc (n + n + (suc n * n))
+    ≡⟨ cong (λ x → suc (n + n + x)) (*-comm (suc n) n) ⟩
+      suc (n + n + n * suc n)
+    ≡⟨ cong (λ x → suc x) (+-assoc n n (n * suc n)) ⟩
+      suc (n + (n + n * suc n))
+    ≡⟨ cong (λ x → x + (n + n * suc n)) (+-comm 1 n) ⟩
+      n + 1 + (n + n * suc n)
+    ≡⟨ +-assoc n 1 (n + n * suc n) ⟩
+      n + suc (n + n * suc n)
+  ∎)
+
+sum-downFrom : ∀ (n : ℕ)
+  → sum (downFrom n) * 2 ≡ n * (n ∸ 1)
+sum-downFrom zero = refl
+sum-downFrom (suc n) = 
+  begin
+    sum (n ∷ downFrom n) * 2
+  ≡⟨⟩
+    (n + sum (downFrom n)) * 2
+  ≡⟨ *-distribʳ-+ 2 n (sum (downFrom n)) ⟩
+    n * 2 + (sum (downFrom n)) * 2
+  ≡⟨ cong (λ x → n * 2 + x) (sum-downFrom n) ⟩
+    n * 2 + (n * (n ∸ 1))
+  ≡⟨ solve¹ n ⟩
+    n + n * n
+  ∎
 \end{code}
 
 
