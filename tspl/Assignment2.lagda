@@ -464,14 +464,35 @@ Show that existentials distribute over disjunction.
   → ∃[ x ] C x
 ∃-intro ∃bx f = ∃-elim (λ x z → ⟨ x , f x z ⟩) ∃bx
 
--- ∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
---   ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
--- ∃-distrib-⊎ = record {
---   to = λ y → ∃-elim (λ a B⊎C → ⊎-elim B⊎C (λ Ba → inj₁ ⟨ a , Ba ⟩) λ z → inj₂ ⟨ a , z ⟩) y ;
---   from = λ B⊎C → ⊎-elim B⊎C (λ ∃B → ∃-elim (λ x x₁ → ⟨ x , inj₁ x₁ ⟩) ∃B) λ ∃C → ∃-elim (λ x z → ⟨ x , inj₂ z ⟩) ∃C  ; 
---   from∘to = λ x → {!!} ;
---   to∘from = λ y → {!!}
---   }
+postulate
+  ∃-≡ : ∀ {A : Set} {B : A → Set}
+    → (f : ∃[ x ] B x)
+    → (g : ∃[ x ] B x)
+    → f ≡ g
+
+  ⊎-≡ : ∀ {B C : Set}
+    → (f : B ⊎ C)
+    → (g : B ⊎ C)
+    → f ≡ g
+
+∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
+  ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
+∃-distrib-⊎ = record {
+  to = λ y → ∃-elim (λ a B⊎C → ⊎-elim B⊎C (λ Ba → inj₁ ⟨ a , Ba ⟩) λ z → inj₂ ⟨ a , z ⟩) y ;
+  from = λ B⊎C → ⊎-elim B⊎C (λ ∃B → ∃-elim (λ x x₁ → ⟨ x , inj₁ x₁ ⟩) ∃B) λ ∃C → ∃-elim (λ x z → ⟨ x , inj₂ z ⟩) ∃C  ; 
+  from∘to = λ x → ∃-≡ (⊎-elim
+                         (∃-elim
+                          (λ x₁ z →
+                             ⊎-elim z (λ z₁ → inj₁ ⟨ x₁ , z₁ ⟩) (λ z₁ → inj₂ ⟨ x₁ , z₁ ⟩))
+                          x)
+                         (∃-elim (λ x₁ z → ⟨ x₁ , inj₁ z ⟩))
+                         (∃-elim (λ x₁ z → ⟨ x₁ , inj₂ z ⟩))) x ;
+  to∘from = λ y → ⊎-≡ (∃-elim
+                         (λ x z →
+                            ⊎-elim z (λ z₁ → inj₁ ⟨ x , z₁ ⟩) (λ z₁ → inj₂ ⟨ x , z₁ ⟩))
+                         (⊎-elim y (∃-elim (λ x z → ⟨ x , inj₁ z ⟩))
+                          (∃-elim (λ x z → ⟨ x , inj₂ z ⟩)))) y
+  }
 \end{code}
 
 #### Exercise `∃×-implies-×∃`
@@ -634,21 +655,21 @@ Using the above, establish that there is an isomorphism between `ℕ` and
 
 \begin{code}
 
--- can-isomorph :
---     {Can : Bin → Set}
---   → {from : Bin → ℕ}
---   → {to : ℕ → Bin}
---   → {eq : {n : ℕ} → from (to n) ≡ n}
---   → {from∘to : {n : ℕ} → Can (to n)}
---   → {to∘from : {b : Bin} → Can b → to (from b) ≡ b}
---   → (∃[ x ] Can x) ≃ ℕ
--- can-isomorph {can} {from} {to} {eq} {from∘to} {to∘from} =
---   record {
---   to = λ f → ∃-elim (λ x _ → from x) f ;
---   from = λ n → ⟨ (to n) , from∘to ⟩ ;
---   from∘to = λ f → ∃-elim (λ b canb → {!!}) f ;
---   to∘from = λ y → eq
---   }
+can-isomorph :
+    {Can : Bin → Set}
+  → {from : Bin → ℕ}
+  → {to : ℕ → Bin}
+  → {eq : {n : ℕ} → from (to n) ≡ n}
+  → {from∘to : {n : ℕ} → Can (to n)}
+  → {to∘from : {b : Bin} → Can b → to (from b) ≡ b}
+  → (∃[ x ] Can x) ≃ ℕ
+can-isomorph {can} {from} {to} {eq} {from∘to} {to∘from} =
+  record {
+  to = λ f → ∃-elim (λ x _ → from x) f ;
+  from = λ n → ⟨ (to n) , from∘to ⟩ ;
+  from∘to = λ f → ∃-≡ ⟨ to (∃-elim (λ x _ → from x) f) , from∘to ⟩ f ;
+  to∘from = λ y → eq
+  }
 
 
 \end{code}
