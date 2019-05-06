@@ -266,26 +266,18 @@ Show that if `_⊕_` and `e` form a monoid, then `foldr _⊗_ e` and
 `foldl _⊗_ e` always compute the same result.
 
 \begin{code}
-empty-right : ∀ {A : Set} → (xs : List A) → xs ++ [] ≡ xs
-empty-right [] = refl
-empty-right (x ∷ xs) = cong (_∷_ x) (empty-right xs)
-
-foldl-monoid : ∀ {A : Set} {ε : A} {_⊕_ : A → A → A} (xs ys : List A)
+foldl-monoid : ∀ {A : Set} {ε : A} {_⊕_ : A → A → A} (x y : A) (xs : List A)
   → (IsMonoid _≡_ _⊕_ ε)
-  → foldl _⊕_ ε (xs ++ ys) ≡ (foldl _⊕_ ε xs) ⊕ foldl _⊕_ ε ys
-foldl-monoid {_} {ε} {_⊕_} [] ys isMonoid = sym
-                                              (Data.Product.proj₁ (IsMonoid.identity isMonoid) (foldl _⊕_ ε ys))
-foldl-monoid {_} {ε} {_⊕_} (x ∷ xs) [] isMonoid = 
+  → x ⊕ foldl _⊕_ y xs ≡ foldl _⊕_ (x ⊕ y) xs
+foldl-monoid {_} {ε} {_⊕_} x y [] isMonoid = refl
+foldl-monoid {_} {ε} {_⊕_} x y (z ∷ zs) isMonoid = 
   begin
-    foldl _⊕_ (ε ⊕ x) (xs ++ [])
-  ≡⟨ cong (λ y →  foldl _⊕_ (ε ⊕ x) y) (empty-right xs) ⟩
-    foldl _⊕_ (ε ⊕ x) xs
-  ≡⟨ Eq.sym (identityʳ ( foldl _⊕_ (ε ⊕ x) xs)) ⟩
-    (foldl _⊕_ (ε ⊕ x) xs ⊕ ε)
+    (x ⊕ foldl _⊕_ (y ⊕ z) zs)
+  ≡⟨ foldl-monoid {_} {ε} {_⊕_} x (y ⊕ z) zs isMonoid ⟩
+    foldl _⊕_ (x ⊕ (y ⊕ z)) zs
+  ≡⟨ cong (λ u → foldl _⊕_ u zs) (Eq.sym (assoc x y z)) ⟩
+    foldl _⊕_ ((x ⊕ y) ⊕ z) zs
   ∎
-  where
-    open IsMonoid isMonoid
-foldl-monoid {_} {ε} {_⊕_} (x ∷ xs) ys isMonoid = {!foldl-monoid xs ys isMonoid!}
   where
     open IsMonoid isMonoid
 
@@ -296,18 +288,23 @@ foldr-monoid-foldl {_} {ε} {_⊕_} (x ∷ xs) isMonoid =
     (x ⊕ (foldr _⊕_ ε xs))
   ≡⟨ cong (λ y → x ⊕ y) (foldr-monoid-foldl xs isMonoid) ⟩
   (x ⊕ foldl _⊕_ ε xs)
-  ≡⟨⟩
-    {!!}
-    ≡⟨⟩
-    {!!}
-  ≡⟨ {!!} ⟩
+  ≡⟨ foldl-monoid x ε xs isMonoid ⟩
+    foldl _⊕_ (x ⊕ ε) xs
+  ≡⟨ Eq.cong (λ w → foldl _⊕_ w xs) change-ε ⟩
     foldl _⊕_ (ε ⊕ x) xs
   ∎
   where
     open IsMonoid isMonoid
+    change-ε : x ⊕ ε ≡ ε ⊕ x
+    change-ε = 
+      begin
+        x ⊕ ε
+      ≡⟨ identityʳ x ⟩
+        x
+      ≡⟨ Eq.sym (identityˡ x) ⟩
+        (ε ⊕ x)
+      ∎
 \end{code}
-
--- f x (foldl f 0 xs)
 
 #### Exercise `Any-++-⇔` (recommended)
 
