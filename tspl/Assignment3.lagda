@@ -8,8 +8,10 @@ permalink : /Assignment3/
 module Assignment3 where
 \end{code}
 
-## YOUR NAME AND EMAIL GOES HERE
+## Name
 Guilherme Horta Alvares da Silva
+
+## Email
 guilhermehas@hotmail.com
 
 ## Introduction
@@ -252,12 +254,60 @@ operations associate to the left rather than the right.  For example,
     foldr _⊗_ e [ x , y , z ]  =  x ⊗ (y ⊗ (z ⊗ e))
     foldl _⊗_ e [ x , y , z ]  =  ((e ⊗ x) ⊗ y) ⊗ z
 
+\begin{code}
+foldl : ∀ {A B : Set} → (B → A → B) → B → List A → B
+foldl f e [] = e
+foldl f e (x ∷ xs) = foldl f (f e x) xs
+\end{code}
 
 #### Exercise `foldr-monoid-foldl`
 
 Show that if `_⊕_` and `e` form a monoid, then `foldr _⊗_ e` and
 `foldl _⊗_ e` always compute the same result.
 
+\begin{code}
+empty-right : ∀ {A : Set} → (xs : List A) → xs ++ [] ≡ xs
+empty-right [] = refl
+empty-right (x ∷ xs) = cong (_∷_ x) (empty-right xs)
+
+foldl-monoid : ∀ {A : Set} {ε : A} {_⊕_ : A → A → A} (xs ys : List A)
+  → (IsMonoid _≡_ _⊕_ ε)
+  → foldl _⊕_ ε (xs ++ ys) ≡ (foldl _⊕_ ε xs) ⊕ foldl _⊕_ ε ys
+foldl-monoid {_} {ε} {_⊕_} [] ys isMonoid = sym
+                                              (Data.Product.proj₁ (IsMonoid.identity isMonoid) (foldl _⊕_ ε ys))
+foldl-monoid {_} {ε} {_⊕_} (x ∷ xs) [] isMonoid = 
+  begin
+    foldl _⊕_ (ε ⊕ x) (xs ++ [])
+  ≡⟨ cong (λ y →  foldl _⊕_ (ε ⊕ x) y) (empty-right xs) ⟩
+    foldl _⊕_ (ε ⊕ x) xs
+  ≡⟨ Eq.sym (identityʳ ( foldl _⊕_ (ε ⊕ x) xs)) ⟩
+    (foldl _⊕_ (ε ⊕ x) xs ⊕ ε)
+  ∎
+  where
+    open IsMonoid isMonoid
+foldl-monoid {_} {ε} {_⊕_} (x ∷ xs) ys isMonoid = {!foldl-monoid xs ys isMonoid!}
+  where
+    open IsMonoid isMonoid
+
+foldr-monoid-foldl : ∀ {A : Set} {ε : A} {_⊕_ : A → A → A} (xs : List A) → (IsMonoid _≡_ _⊕_ ε) → foldr _⊕_ ε xs ≡ foldl _⊕_ ε xs
+foldr-monoid-foldl [] monoid = refl
+foldr-monoid-foldl {_} {ε} {_⊕_} (x ∷ xs) isMonoid = 
+  begin
+    (x ⊕ (foldr _⊕_ ε xs))
+  ≡⟨ cong (λ y → x ⊕ y) (foldr-monoid-foldl xs isMonoid) ⟩
+  (x ⊕ foldl _⊕_ ε xs)
+  ≡⟨⟩
+    {!!}
+    ≡⟨⟩
+    {!!}
+  ≡⟨ {!!} ⟩
+    foldl _⊕_ (ε ⊕ x) xs
+  ∎
+  where
+    open IsMonoid isMonoid
+\end{code}
+
+-- f x (foldl f 0 xs)
 
 #### Exercise `Any-++-⇔` (recommended)
 
