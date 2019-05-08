@@ -45,9 +45,10 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Function using (_∘_)
 open import Algebra.Structures using (IsMonoid)
 open import Level using (Level)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Relation.Unary using (Decidable)
 open import plfa.Relations using (_<_; z<s; s<s)
-open import plfa.Isomorphism using (_≃_; ≃-sym; ≃-trans; _≲_; extensionality)
+open import plfa.Isomorphism using (_≃_; _⇔_; ≃-sym; ≃-trans; _≲_; extensionality)
 open plfa.Isomorphism.≃-Reasoning
 open import plfa.Lists using (List; []; _∷_; [_]; [_,_]; [_,_,_]; [_,_,_,_];
   _++_; reverse; map; foldr; sum; All; Any; here; there; _∈_; ++-assoc)
@@ -312,6 +313,30 @@ Prove a result similar to `All-++-↔`, but with `Any` in place of `All`, and a 
 replacement for `_×_`.  As a consequence, demonstrate an equivalence relating
 `_∈_` and `_++_`.
 
+\begin{code}
+⊎-elim : ∀ {A B C : Set} → A ⊎ B → (f : A → C) → (g : B → C) → C
+⊎-elim (inj₁ x) f g  = f x
+⊎-elim (inj₂ y) f g = g y
+
+Any-++-⇔ : ∀ {A : Set} {P : A → Set} (xs ys : List A) →
+  Any P (xs ++ ys) ⇔ (Any P xs ⊎ Any P ys)
+Any-++-⇔ xs ys = record { to = to xs ys ; from = from xs ys }
+  where
+
+    to :  {A : Set} {P : A → Set} (xs ys : List A) →
+      Any P (xs ++ ys) → (Any P xs ⊎ Any P ys)
+    to [] ys anyp = inj₂ anyp
+    to (x ∷ xs) ys (here x₁) = inj₁ (here x₁)
+    to (x ∷ xs) ys (there anyp) = ⊎-elim (to xs ys anyp) (λ pxs → inj₁ (there pxs)) λ pys → inj₂ pys
+
+    from :  {A : Set} {P : A → Set} (xs ys : List A) →
+      (Any P xs ⊎ Any P ys) → Any P (xs ++ ys)
+    from [] ys (inj₁ ())
+    from (x ∷ xs) ys (inj₁ (here px)) = here px
+    from (x ∷ xs) ys (inj₁ (there pxs)) = there (from xs ys (inj₁ pxs))
+    from [] ys (inj₂ pys) = pys
+    from (x ∷ xs) ys (inj₂ pys) = there (from xs ys (inj₂ pys))
+\end{code}
 
 #### Exercise `All-++-≃` (stretch)
 
