@@ -355,9 +355,20 @@ _∘′_ : ∀ {ℓ₁ ℓ₂ ℓ₃ : Level} {A : Set ℓ₁} {B : Set ℓ₂} 
 
 Show that `Any` and `All` satisfy a version of De Morgan's Law.
 \begin{code}
-postulate
-  ¬Any≃All¬ : ∀ {A : Set} (P : A → Set) (xs : List A)
-    → (¬_ ∘′ Any P) xs ≃ All (¬_ ∘′ P) xs
+¬Any≃All¬ : ∀ {A : Set} (P : A → Set) (xs : List A)
+  → (¬_ ∘′ Any P) xs ≃ All (¬_ ∘′ P) xs
+¬Any≃All¬ P? xs = record { to = to P? xs ; from = from P? xs ; from∘to = ? ; to∘from = {!!} }
+  where
+    to : ∀ {A : Set} (P : A → Set) (xs : List A)
+      → (¬_ ∘′ Any P) xs → All (¬_ ∘′ P) xs
+    to P? [] notany = []
+    to P? (x ∷ xs) notany = (λ x₁ → notany (here x₁)) ∷ to P? xs (λ z → notany (there z))
+
+    from : ∀ {A : Set} (P : A → Set) (xs : List A)
+      → All (¬_ ∘′ P) xs → (¬_ ∘′ Any P) xs
+    from P? [] allnot = λ ()
+    from P? (x ∷ xs) (¬px ∷ allnot) (here px) = ¬px px
+    from P? (x ∷ xs) (¬px ∷ allnot) (there f) = from P? xs allnot f
 \end{code}
 
 Do we also have the following?
@@ -376,6 +387,14 @@ predicate holds for every element of a list, so does `Any` have
 analogues `any` and `any?` which determine whether a predicates holds
 for some element of a list.  Give their definitions.
 
+\begin{code}
+Any? : ∀ {A : Set} {P : A → Set} → Decidable P → Decidable (Any P)
+Any? P? [] = no (λ ())
+Any? P? (x ∷ xs) with P? x | Any? P? xs
+Any? P? (x ∷ xs) | yes p | pxs = yes (here p)
+Any? P? (x ∷ xs) | no ¬p | yes p = yes (there p)
+Any? P? (x ∷ xs) | no ¬p | no ¬pxs = no λ { (here px) → ¬p px ; (there pxs) → ¬pxs pxs }
+\end{code}
 
 #### Exercise `filter?` (stretch)
 
@@ -383,9 +402,13 @@ Define the following variant of the traditional `filter` function on lists,
 which given a list and a decidable predicate returns all elements of the
 list satisfying the predicate.
 \begin{code}
-postulate
-  filter? : ∀ {A : Set} {P : A → Set}
-    → (P? : Decidable P) → List A → ∃[ ys ]( All P ys )
+filter? : ∀ {A : Set} {P : A → Set}
+  → (P? : Decidable P) → List A → ∃[ ys ]( All P ys )
+filter? P? [] = ⟨ [] , [] ⟩
+filter? P? (x ∷ xs) with P? x
+filter? P? (x ∷ xs) | yes px with filter? P? xs
+filter? P? (x ∷ xs) | yes px | ⟨ pxs , allpxs ⟩ = ⟨ x ∷ pxs , px ∷ allpxs ⟩
+filter? P? (x ∷ xs) | no ¬px = filter? P? xs
 \end{code}
 
 
