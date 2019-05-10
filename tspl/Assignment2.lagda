@@ -464,35 +464,31 @@ Show that existentials distribute over disjunction.
   → ∃[ x ] C x
 ∃-intro ∃bx f = ∃-elim (λ x z → ⟨ x , f x z ⟩) ∃bx
 
-postulate
-  ∃-≡ : ∀ {A : Set} {B : A → Set}
-    → (f : ∃[ x ] B x)
-    → (g : ∃[ x ] B x)
-    → f ≡ g
-
-  ⊎-≡ : ∀ {B C : Set}
-    → (f : B ⊎ C)
-    → (g : B ⊎ C)
-    → f ≡ g
-
 ∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
   ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
 ∃-distrib-⊎ = record {
-  to = λ y → ∃-elim (λ a B⊎C → ⊎-elim B⊎C (λ Ba → inj₁ ⟨ a , Ba ⟩) λ z → inj₂ ⟨ a , z ⟩) y ;
-  from = λ B⊎C → ⊎-elim B⊎C (λ ∃B → ∃-elim (λ x x₁ → ⟨ x , inj₁ x₁ ⟩) ∃B) λ ∃C → ∃-elim (λ x z → ⟨ x , inj₂ z ⟩) ∃C  ; 
-  from∘to = λ x → ∃-≡ (⊎-elim
-                         (∃-elim
-                          (λ x₁ z →
-                             ⊎-elim z (λ z₁ → inj₁ ⟨ x₁ , z₁ ⟩) (λ z₁ → inj₂ ⟨ x₁ , z₁ ⟩))
-                          x)
-                         (∃-elim (λ x₁ z → ⟨ x₁ , inj₁ z ⟩))
-                         (∃-elim (λ x₁ z → ⟨ x₁ , inj₂ z ⟩))) x ;
-  to∘from = λ y → ⊎-≡ (∃-elim
-                         (λ x z →
-                            ⊎-elim z (λ z₁ → inj₁ ⟨ x , z₁ ⟩) (λ z₁ → inj₂ ⟨ x , z₁ ⟩))
-                         (⊎-elim y (∃-elim (λ x z → ⟨ x , inj₁ z ⟩))
-                          (∃-elim (λ x z → ⟨ x , inj₂ z ⟩)))) y
+  to = to∃ ;
+  from = from∃ ;
+  from∘to = from∘to∃ ;
+  to∘from = to∘from∃
   }
+  where
+    to∃ : ∀ {A : Set} {B C : A → Set} → ∃[ x ] (B x ⊎ C x) → (∃[ x ] B x) ⊎ (∃[ x ] C x)
+    to∃ ⟨ fst , inj₁ x ⟩ = inj₁ ⟨ fst , x ⟩
+    to∃ ⟨ fst , inj₂ y ⟩ = inj₂ ⟨ fst , y ⟩
+
+    from∃ : ∀ {A : Set} {B C : A → Set} → (∃[ x ] B x) ⊎ (∃[ x ] C x) → ∃[ x ] (B x ⊎ C x)
+    from∃ (inj₁ ⟨ fst , snd ⟩) = ⟨ fst , inj₁ snd ⟩
+    from∃ (inj₂ ⟨ fst , snd ⟩) = ⟨ fst , inj₂ snd ⟩
+
+    from∘to∃ : ∀ {A : Set} {B C : A → Set} → (y : ∃[ x ] (B x ⊎ C x)) → from∃ (to∃ y) ≡ y
+    from∘to∃ ⟨ fst , inj₁ x ⟩ = refl
+    from∘to∃ ⟨ fst , inj₂ y ⟩ = refl
+
+    to∘from∃ : ∀ {A : Set} {B C : A → Set} → (y : (∃[ x ] B x) ⊎ (∃[ x ] C x)) → to∃ (from∃ y) ≡ y
+    to∘from∃ (inj₁ ⟨ fst , snd ⟩) = refl
+    to∘from∃ (inj₂ ⟨ fst , snd ⟩) = refl
+
 \end{code}
 
 #### Exercise `∃×-implies-×∃`
