@@ -673,7 +673,7 @@ can-isomorph {Can} {from} {to} {canEqual} {eq} {from∘to} {to∘from} =
   }
   where
     toNat : ∃[ x ] Can x → ℕ
-    toNat f = ∃-elim (λ x _ → from x) f
+    toNat ⟨ b , _ ⟩ = from b
 
     fromNat : ℕ → ∃[ x ] Can x
     fromNat n = ⟨ (to n) , from∘to ⟩
@@ -681,9 +681,11 @@ can-isomorph {Can} {from} {to} {canEqual} {eq} {from∘to} {to∘from} =
     to∘from-nat : ∀ (n : ℕ) → toNat (fromNat n) ≡ n
     to∘from-nat _ = eq
 
-    from∘to-bin : ∀ (b : ∃[ x ] Can x) → fromNat (toNat b) ≡ b
-    from∘to-bin f = ∃-≡ ⟨ to (∃-elim (λ x _ → from x) f) , from∘to ⟩ f
+    helper : (x y : Bin) → x ≡ y → (a : Can x) → (b : Can y) → ⟨ x , a ⟩ ≡ ⟨ y , b ⟩
+    helper x .x refl a b = sym (cong (⟨_,_⟩ x) canEqual)
 
+    from∘to-bin : ∀ (b : ∃[ x ] Can x) → fromNat (toNat b) ≡ b
+    from∘to-bin ⟨ b , canb ⟩ = helper (to (from b)) b (to∘from canb) from∘to canb
 
 
 \end{code}
