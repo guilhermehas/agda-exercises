@@ -659,17 +659,31 @@ can-isomorph :
     {Can : Bin → Set}
   → {from : Bin → ℕ}
   → {to : ℕ → Bin}
+  → {canEqual : ∀ {b : Bin} {c₁ c₂ : Can b} → c₁ ≡ c₂}
   → {eq : {n : ℕ} → from (to n) ≡ n}
   → {from∘to : {n : ℕ} → Can (to n)}
   → {to∘from : {b : Bin} → Can b → to (from b) ≡ b}
   → (∃[ x ] Can x) ≃ ℕ
-can-isomorph {can} {from} {to} {eq} {from∘to} {to∘from} =
+can-isomorph {Can} {from} {to} {canEqual} {eq} {from∘to} {to∘from} =
   record {
-  to = λ f → ∃-elim (λ x _ → from x) f ;
-  from = λ n → ⟨ (to n) , from∘to ⟩ ;
-  from∘to = λ f → ∃-≡ ⟨ to (∃-elim (λ x _ → from x) f) , from∘to ⟩ f ;
-  to∘from = λ y → eq
+  to =  toNat ;
+  from = fromNat ;
+  from∘to = from∘to-bin ;
+  to∘from = to∘from-nat
   }
+  where
+    toNat : ∃[ x ] Can x → ℕ
+    toNat f = ∃-elim (λ x _ → from x) f
+
+    fromNat : ℕ → ∃[ x ] Can x
+    fromNat n = ⟨ (to n) , from∘to ⟩
+
+    to∘from-nat : ∀ (n : ℕ) → toNat (fromNat n) ≡ n
+    to∘from-nat _ = eq
+
+    from∘to-bin : ∀ (b : ∃[ x ] Can x) → fromNat (toNat b) ≡ b
+    from∘to-bin f = ∃-≡ ⟨ to (∃-elim (λ x _ → from x) f) , from∘to ⟩ f
+
 
 
 \end{code}

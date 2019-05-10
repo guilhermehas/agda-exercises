@@ -42,6 +42,7 @@ open import Data.Nat.Properties using
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Unit using (⊤; tt)
 open import Function using (_∘_)
 open import Algebra.Structures using (IsMonoid)
 open import Level using (Level)
@@ -342,7 +343,6 @@ Any-++-⇔ xs ys = record { to = to xs ys ; from = from xs ys }
 
 Show that the equivalence `All-++-⇔` can be extended to an isomorphism.
 
-
 #### Exercise `¬Any≃All¬` (stretch)
 
 First generalise composition to arbitrary levels, using
@@ -357,7 +357,7 @@ Show that `Any` and `All` satisfy a version of De Morgan's Law.
 \begin{code}
 ¬Any≃All¬ : ∀ {A : Set} (P : A → Set) (xs : List A)
   → (¬_ ∘′ Any P) xs ≃ All (¬_ ∘′ P) xs
-¬Any≃All¬ P? xs = record { to = to P? xs ; from = from P? xs ; from∘to = ? ; to∘from = {!!} }
+¬Any≃All¬ P? xs = record { to = to P? xs ; from = from P? xs ; from∘to = {!!} ; to∘from = {!!} }
   where
     to : ∀ {A : Set} (P : A → Set) (xs : List A)
       → (¬_ ∘′ Any P) xs → All (¬_ ∘′ P) xs
@@ -369,6 +369,8 @@ Show that `Any` and `All` satisfy a version of De Morgan's Law.
     from P? [] allnot = λ ()
     from P? (x ∷ xs) (¬px ∷ allnot) (here px) = ¬px px
     from P? (x ∷ xs) (¬px ∷ allnot) (there f) = from P? xs allnot f
+
+
 \end{code}
 
 Do we also have the following?
@@ -378,7 +380,6 @@ postulate
     → (¬_ ∘′ All P) xs ≃ Any (¬_ ∘′ P) xs
 \end{code}
 If so, prove; if not, explain why.
-
 
 #### Exercise `any?` (stretch)
 
