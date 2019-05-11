@@ -33,7 +33,7 @@ Please ensure your files execute correctly under Agda!
 
 \begin{code}
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; cong; sym)
+open Eq using (_≡_; refl; cong; sym; trans)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _≡⟨_⟩_; _∎)
 open import Data.Bool.Base using (Bool; true; false; T; _∧_; _∨_; not)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _∸_; _≤_; s≤s; z≤n)
@@ -348,13 +348,16 @@ Any-++-≃ : ∀ {A : Set} {P : A → Set} (xs ys : List A) →
   Any P (xs ++ ys) ≃ (Any P xs ⊎ Any P ys)
 Any-++-≃ xs ys = record { to = to xs ys ; from = from xs ys ; from∘to = from∘to xs ys ; to∘from = to∘from xs ys }
   where
+  ⊎-cons : {A : Set} {P : A → Set} (x : A) (xs ys : List A)
+    → (Any P xs ⊎ Any P ys) → (Any P (x ∷ xs) ⊎ Any P ys)
+  ⊎-cons x xs ys (inj₁ x₁) = inj₁ (there x₁)
+  ⊎-cons x xs ys (inj₂ y) = inj₂ y
+
   to :  {A : Set} {P : A → Set} (xs ys : List A) →
     Any P (xs ++ ys) → (Any P xs ⊎ Any P ys)
   to [] ys anyp = inj₂ anyp
   to (x ∷ xs) ys (here x₁) = inj₁ (here x₁)
-  to (x ∷ xs) ys (there anyp) with to xs ys anyp
-  to (x ∷ xs) ys (there anyp) | inj₁ x₁ = inj₁ (there x₁)
-  to (x ∷ xs) ys (there anyp) | inj₂ y = inj₂ y
+  to (x ∷ xs) ys (there anyp) = ⊎-cons x xs ys (to xs ys anyp)
 
   from :  {A : Set} {P : A → Set} (xs ys : List A) →
     (Any P xs ⊎ Any P ys) → Any P (xs ++ ys)
@@ -364,27 +367,24 @@ Any-++-≃ xs ys = record { to = to xs ys ; from = from xs ys ; from∘to = from
   from [] ys (inj₂ pys) = pys
   from (x ∷ xs) ys (inj₂ pys) = there (from xs ys (inj₂ pys))
 
-  -- from∘to-xs : {A : Set} {P : A → Set} (x : A) (xs ys : List A)
-  --   → (anyp : Any P ((x ∷ xs) ++ ys))
-  --   → (anyxs : to xs ys anyp)
-  --   → from (x ∷ xs) ys (to (x ∷ xs) ys anyp) ≡ anyp
-  -- from∘to-xs x xs ys anyxs = {!!}
+  from∘to-cons :  {A : Set} {P : A → Set} (x : A) (xs ys : List A)
+    → (anyp : Any P xs ⊎ Any P ys) → from (x ∷ xs) ys (⊎-cons x xs ys anyp) ≡ there (from xs ys anyp)
+  from∘to-cons x xs ys (inj₁ x₁) = refl
+  from∘to-cons x xs ys (inj₂ y) = refl
 
   from∘to :  {A : Set} {P : A → Set} (xs ys : List A)
     → (anyp : Any P (xs ++ ys)) → from xs ys (to xs ys anyp) ≡ anyp
   from∘to [] ys anyp = refl
-  from∘to (x ∷ xs) _ (here _) = refl
-  from∘to (x ∷ xs) ys (there anyp) = {!anyp!}
+  from∘to (x ∷ xs) ys (here x₁) = refl
+  from∘to (x ∷ xs) ys (there anyp) = trans (from∘to-cons x xs ys (to xs ys anyp)) (cong there (from∘to xs ys anyp))
 
   to∘from :  {A : Set} {P : A → Set} (xs ys : List A)
     → (anyp :  Any P xs ⊎ Any P ys) → to xs ys (from xs ys anyp) ≡ anyp
   to∘from [] ys (inj₁ ())
-  to∘from (x₁ ∷ xs) ys (inj₁ (here x)) = refl
-  to∘from (x₁ ∷ xs) ys (inj₁ (there x)) with to xs ys (from xs ys (inj₁ x))
-  to∘from (x₁ ∷ xs) ys (inj₁ (there x)) | inj₁ x₂ = {!x₂!}
-  to∘from (x₁ ∷ xs) ys (inj₁ (there x)) | inj₂ y = {!!}
-  to∘from xs ys (inj₂ y) = {!!}
-
+  to∘from [] ys (inj₂ y) = refl
+  to∘from (x ∷ xs) ys (inj₁ (here x₁)) = refl
+  to∘from (x ∷ xs) ys (inj₁ (there anyxs)) = cong (λ z → ⊎-cons x xs ys z) (to∘from xs ys (inj₁ anyxs))
+  to∘from (x ∷ xs) ys (inj₂ anyys) = {!!}
 \end{code}
 
 #### Exercise `¬Any≃All¬` (stretch)
