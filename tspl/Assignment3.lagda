@@ -359,18 +359,28 @@ Any-++-≃ xs ys = record { to = to xs ys ; from = from xs ys ; from∘to = from
   to (x ∷ xs) ys (here x₁) = inj₁ (here x₁)
   to (x ∷ xs) ys (there anyp) = ⊎-cons x xs ys (to xs ys anyp)
 
+  ysʳ : {A : Set} {P : A → Set} (xs ys : List A)
+    → Any P ys → Any P (xs ++ ys)
+  ysʳ [] ys any = any
+  ysʳ (x ∷ xs) ys any = there (ysʳ xs ys any)
+
   from :  {A : Set} {P : A → Set} (xs ys : List A) →
     (Any P xs ⊎ Any P ys) → Any P (xs ++ ys)
   from [] ys (inj₁ ())
   from (x ∷ xs) ys (inj₁ (here px)) = here px
   from (x ∷ xs) ys (inj₁ (there pxs)) = there (from xs ys (inj₁ pxs))
-  from [] ys (inj₂ pys) = pys
-  from (x ∷ xs) ys (inj₂ pys) = there (from xs ys (inj₂ pys))
+  from xs ys (inj₂ pys) = ysʳ xs ys pys
 
-  from∘to-cons :  {A : Set} {P : A → Set} (x : A) (xs ys : List A)
+  eq-lemma : {A : Set} {P : A → Set} (xs ys : List A)
+    → (anyp : Any P ys)
+    → ysʳ xs ys anyp ≡ from xs ys (inj₂ anyp)
+  eq-lemma [] ys anyp = refl
+  eq-lemma (x ∷ xs) ys anyp = refl
+
+  from∘to-cons : {A : Set} {P : A → Set} (x : A) (xs ys : List A)
     → (anyp : Any P xs ⊎ Any P ys) → from (x ∷ xs) ys (⊎-cons x xs ys anyp) ≡ there (from xs ys anyp)
   from∘to-cons x xs ys (inj₁ x₁) = refl
-  from∘to-cons x xs ys (inj₂ y) = refl
+  from∘to-cons x xs ys (inj₂ y) = cong there (eq-lemma xs ys y)
 
   from∘to :  {A : Set} {P : A → Set} (xs ys : List A)
     → (anyp : Any P (xs ++ ys)) → from xs ys (to xs ys anyp) ≡ anyp
@@ -378,13 +388,25 @@ Any-++-≃ xs ys = record { to = to xs ys ; from = from xs ys ; from∘to = from
   from∘to (x ∷ xs) ys (here x₁) = refl
   from∘to (x ∷ xs) ys (there anyp) = trans (from∘to-cons x xs ys (to xs ys anyp)) (cong there (from∘to xs ys anyp))
 
+  to∘from-cons : {A : Set} {P : A → Set} (xs ys : List A)
+    → (anyp : Any P ys) → to xs ys (ysʳ xs ys anyp) ≡ inj₂ anyp
+  to∘from-cons [] ys anyp = refl
+  to∘from-cons (x ∷ xs) ys anyp = cong (λ z → ⊎-cons x xs ys z) (to∘from-cons xs ys anyp)
+
   to∘from :  {A : Set} {P : A → Set} (xs ys : List A)
     → (anyp :  Any P xs ⊎ Any P ys) → to xs ys (from xs ys anyp) ≡ anyp
   to∘from [] ys (inj₁ ())
   to∘from [] ys (inj₂ y) = refl
   to∘from (x ∷ xs) ys (inj₁ (here x₁)) = refl
   to∘from (x ∷ xs) ys (inj₁ (there anyxs)) = cong (λ z → ⊎-cons x xs ys z) (to∘from xs ys (inj₁ anyxs))
-  to∘from (x ∷ xs) ys (inj₂ anyys) = {!!}
+  to∘from xs ys (inj₂ anyys) = 
+    begin
+      to xs ys (from xs ys (inj₂ anyys))
+    ≡⟨ cong (λ z → to xs ys z) (sym (eq-lemma xs ys anyys)) ⟩
+      to xs ys (ysʳ xs ys anyys)
+    ≡⟨ to∘from-cons xs ys anyys ⟩
+      inj₂ anyys
+    ∎
 \end{code}
 
 #### Exercise `¬Any≃All¬` (stretch)
