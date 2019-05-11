@@ -343,6 +343,50 @@ Any-++-⇔ xs ys = record { to = to xs ys ; from = from xs ys }
 
 Show that the equivalence `All-++-⇔` can be extended to an isomorphism.
 
+\begin{code}
+Any-++-≃ : ∀ {A : Set} {P : A → Set} (xs ys : List A) →
+  Any P (xs ++ ys) ≃ (Any P xs ⊎ Any P ys)
+Any-++-≃ xs ys = record { to = to xs ys ; from = from xs ys ; from∘to = from∘to xs ys ; to∘from = to∘from xs ys }
+  where
+  to :  {A : Set} {P : A → Set} (xs ys : List A) →
+    Any P (xs ++ ys) → (Any P xs ⊎ Any P ys)
+  to [] ys anyp = inj₂ anyp
+  to (x ∷ xs) ys (here x₁) = inj₁ (here x₁)
+  to (x ∷ xs) ys (there anyp) with to xs ys anyp
+  to (x ∷ xs) ys (there anyp) | inj₁ x₁ = inj₁ (there x₁)
+  to (x ∷ xs) ys (there anyp) | inj₂ y = inj₂ y
+
+  from :  {A : Set} {P : A → Set} (xs ys : List A) →
+    (Any P xs ⊎ Any P ys) → Any P (xs ++ ys)
+  from [] ys (inj₁ ())
+  from (x ∷ xs) ys (inj₁ (here px)) = here px
+  from (x ∷ xs) ys (inj₁ (there pxs)) = there (from xs ys (inj₁ pxs))
+  from [] ys (inj₂ pys) = pys
+  from (x ∷ xs) ys (inj₂ pys) = there (from xs ys (inj₂ pys))
+
+  -- from∘to-xs : {A : Set} {P : A → Set} (x : A) (xs ys : List A)
+  --   → (anyp : Any P ((x ∷ xs) ++ ys))
+  --   → (anyxs : to xs ys anyp)
+  --   → from (x ∷ xs) ys (to (x ∷ xs) ys anyp) ≡ anyp
+  -- from∘to-xs x xs ys anyxs = {!!}
+
+  from∘to :  {A : Set} {P : A → Set} (xs ys : List A)
+    → (anyp : Any P (xs ++ ys)) → from xs ys (to xs ys anyp) ≡ anyp
+  from∘to [] ys anyp = refl
+  from∘to (x ∷ xs) _ (here _) = refl
+  from∘to (x ∷ xs) ys (there anyp) = {!anyp!}
+
+  to∘from :  {A : Set} {P : A → Set} (xs ys : List A)
+    → (anyp :  Any P xs ⊎ Any P ys) → to xs ys (from xs ys anyp) ≡ anyp
+  to∘from [] ys (inj₁ ())
+  to∘from (x₁ ∷ xs) ys (inj₁ (here x)) = refl
+  to∘from (x₁ ∷ xs) ys (inj₁ (there x)) with to xs ys (from xs ys (inj₁ x))
+  to∘from (x₁ ∷ xs) ys (inj₁ (there x)) | inj₁ x₂ = {!x₂!}
+  to∘from (x₁ ∷ xs) ys (inj₁ (there x)) | inj₂ y = {!!}
+  to∘from xs ys (inj₂ y) = {!!}
+
+\end{code}
+
 #### Exercise `¬Any≃All¬` (stretch)
 
 First generalise composition to arbitrary levels, using
@@ -357,7 +401,7 @@ Show that `Any` and `All` satisfy a version of De Morgan's Law.
 \begin{code}
 ¬Any≃All¬ : ∀ {A : Set} (P : A → Set) (xs : List A)
   → (¬_ ∘′ Any P) xs ≃ All (¬_ ∘′ P) xs
-¬Any≃All¬ P? xs = record { to = to P? xs ; from = from P? xs ; from∘to = {!!} ; to∘from = {!!} }
+¬Any≃All¬ P? xs = record { to = to P? xs ; from = from P? xs ; from∘to = from∘to P? xs ; to∘from = to∘from P? xs }
   where
     to : ∀ {A : Set} (P : A → Set) (xs : List A)
       → (¬_ ∘′ Any P) xs → All (¬_ ∘′ P) xs
@@ -370,7 +414,20 @@ Show that `Any` and `All` satisfy a version of De Morgan's Law.
     from P? (x ∷ xs) (¬px ∷ allnot) (here px) = ¬px px
     from P? (x ∷ xs) (¬px ∷ allnot) (there f) = from P? xs allnot f
 
+    from∘to : ∀ {A : Set} (P? : A → Set) (xs : List A) (x : (¬_ ∘′ Any P?) xs) → from P? xs (to P? xs x) ≡ x
+    from∘to P? [] f = extensionality λ ()
+    from∘to P? (y ∷ ys) f = extensionality λ { (here _) → refl ; (there c) → ⊥-elim (f (there c)) }
 
+    to∘from : ∀ {A : Set} (P? : A → Set) (xs : List A) (x : All (¬_ ∘′ P?) xs) → to P? xs (from P? xs x) ≡ x
+    to∘from P? [] [] = refl
+    to∘from P? (x ∷ xs) (Px ∷ f) =
+      begin
+        (λ x₁ → Px x₁) ∷ to P? xs (λ z → from P? xs f z)
+      ≡⟨ cong (λ y → y ∷ to P? xs (λ z → from P? xs f z) ) (begin ((λ x₁ → Px x₁)) ≡⟨ extensionality (λ Px → refl) ⟩ Px ∎) ⟩
+        Px ∷ to P? xs (λ z → from P? xs f z)
+      ≡⟨ cong (_∷_ Px) (to∘from P? xs f) ⟩
+        Px ∷ f
+      ∎
 \end{code}
 
 Do we also have the following?
