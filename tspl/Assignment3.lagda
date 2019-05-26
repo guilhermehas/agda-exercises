@@ -30,6 +30,7 @@ open Eq using (_≡_; refl; cong; sym)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _≡⟨_⟩_; _∎)
 open import Data.Bool.Base using (Bool; true; false; T; _∧_; _∨_; not)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _∸_; _≤_; s≤s; z≤n)
+open import Data.String.Unsafe using (_≟_)
 open import Data.Nat.Properties using
   (+-assoc; +-identityˡ; +-identityʳ; *-assoc; *-identityˡ; *-identityʳ)
 open import Relation.Nullary using (¬_; Dec; yes; no)
@@ -55,6 +56,13 @@ open import plfa.Properties hiding (value?; unstuck; preserves; wttdgs)
 Write out the definition of a lambda term that multiplies
 two natural numbers.
 
+\begin{code}
+mul : Term
+mul = μ "*" ⇒ ƛ "m" ⇒ ƛ "n" ⇒
+    case ` "m"
+      [zero⇒ `zero
+      |suc "m" ⇒ (plus · ` "n" · (` "*" · ` "m" · ` "n")) ]
+\end{code}
 
 #### Exercise `primed` (stretch)
 
@@ -84,11 +92,24 @@ plus′ = μ′ + ⇒ ƛ′ m ⇒ ƛ′ n ⇒
             [zero⇒ n
             |suc m ⇒ `suc (+ · m · n) ]
   where
-  +  =  ` "+"
+  +  =  plus
   m  =  ` "m"
   n  =  ` "n"
 \end{code}
 Write out the definition of multiplication in the same style.
+
+\begin{code}
+mul′ : Term
+mul′ = μ′ + ⇒ ƛ′ m ⇒ ƛ′ n ⇒
+          case′ m
+            [zero⇒ `zero
+            |suc m ⇒ (+ · n · (* · m · n)) ]
+  where
+  *  =  ` "*"
+  +  =  ` "+"
+  m  =  ` "m"
+  n  =  ` "n"
+\end{code}
 
 #### Exercise `_[_:=_]′` (stretch)
 
@@ -98,6 +119,24 @@ Rewrite the definition to factor the common part of these three
 clauses into a single function, defined by mutual recursion with
 substitution.
 
+\begin{code}
+mutual
+  subs : Id → Term → Id → Term → Term
+  subs x N y V with x ≟ y
+  subs x N y V | yes _ = N
+  subs x N y V | no _ = N [ x :== V ]
+
+  _[_:==_] : Term → Id → Term → Term
+  (` x) [ y :== V ] with x ≟ y
+  ... | yes _          =  V
+  ... | no  _          =  ` x
+  (ƛ x ⇒ N) [ y :== V ] = ƛ x ⇒ (subs x N y V)
+  (N₁ · N₂) [ y :== V ] = (N₁ [ y :== V ]) · (N₂ [ y :== V ])
+  `zero [ y :== V ] = `zero
+  (`suc N) [ y :== V ] = `suc N [ y :== V ]
+  case L [zero⇒ M |suc x ⇒ N ] [ y :== V ] = case L [ y := V ] [zero⇒ M [ y := V ] |suc x ⇒ subs x N y V ]
+  (μ x ⇒ N) [ y :== V ] = μ x ⇒ subs x N y V
+\end{code}
 
 #### Exercise `—↠≃—↠′`
 
@@ -115,6 +154,19 @@ Write out the reduction sequence demonstrating that one plus one is two.
 Using the term `mul` you defined earlier, write out the derivation
 showing that it is well-typed.
 
+\begin{code}
+⊢mul : ∀ {Γ} → Γ ⊢ mul ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ
+⊢mul = ⊢μ (⊢ƛ (⊢ƛ (⊢case (⊢` (S (m ≠ n) Z)) ⊢zero (((⊢μ (⊢ƛ (⊢ƛ (⊢case (⊢` (S (m ≠ n) Z))
+  (⊢` Z) (⊢suc (((⊢` (S (+ ≠ m) (S (+ ≠ n) (S (+ ≠ m) Z)))) ·
+  ⊢` Z) · ⊢` (S (n ≠ m) Z))))))) · ⊢` (S (n ≠ m) Z)) ·
+  (((⊢` (S (* ≠ m) (S (* ≠ n) (S (* ≠ m) Z)))) ·
+  ⊢` Z) · ⊢` (S (n ≠ m) Z))))))
+  where
+  m = "m"
+  n = "n"
+  + = "+"
+  * = "*"
+\end{code}
 
 ## Properties
 
