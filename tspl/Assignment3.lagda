@@ -1419,32 +1419,6 @@ Stuck→Stuck` ⟨ _ , ¬VM ⟩ (inj₂ VM) = ¬VM VM
 Stuck`→Stuck : ∀ {M} → Stuck` M → Stuck M
 Stuck`→Stuck stm = ⟨ (λ M→N → stm (inj₁ λ NM → NM M→N)) , (λ VM → stm (inj₂ VM)) ⟩
 
--- mutual
---   unstuck` : ∀ {M A}
---     → ∅ ⊢ M ⦂ A
---     -----------
---     → ¬ (Stuck` M)
---   unstuck` ⊢M stm = unstuck ⊢M (Stuck`→Stuck stm)
---   -- unstuck ⊢M st = unstuck` ⊢M (Stuck→Stuck` st)
-
---   unstuck : ∀ {M A}
---     → ∅ ⊢ M ⦂ A
---     -----------
---     → ¬ (Stuck M)
---   unstuck (⊢` ()) ⟨ NM , ¬VM ⟩
---   unstuck (⊢ƛ ⊢M) ⟨ NM , ¬VM ⟩ = ¬VM V-ƛ
---   unstuck (⊢L · ⊢M) ⟨ NM , _ ⟩ = {!!}
---   unstuck ⊢zero ⟨ NM , ¬VM ⟩ = ¬VM V-zero
---   unstuck (⊢suc {_} {M} ⊢M) ⟨ NM , ¬VM ⟩ = unstuck` ⊢M stuckm
---     where
---     stuckm : Stuck` M
---     stuckm (inj₁ ¬NM) = ¬NM λ M→N → NM (ξ-suc M→N)
---     stuckm (inj₂ VSm) = ¬VM (V-suc VSm)
-
---   unstuck {_} {A} (⊢case {_} {L} {M} {x} {N} ⊢L ⊢M ⊢N) ⟨ NM , _ ⟩ = {!!}
---   unstuck (⊢μ ⊢M) ⟨ NM , ¬VM ⟩ = NM β-μ
-
-
 progress-unstuck : ∀ {M}
   → Progress M
   -----------
