@@ -9,9 +9,14 @@ module Assignment3 where
 \end{code}
 
 ## YOUR NAME AND EMAIL GOES HERE
+# Name
+Guilherme Horta Alvares da Silva
+
+# Email
+guilhermehas@hotmail.com
 
 ## Introduction
-v
+
 You must do _all_ the exercises labelled "(recommended)".
 
 Exercises labelled "(stretch)" are there to provide an extra challenge.
@@ -101,7 +106,7 @@ Write out the definition of multiplication in the same style.
 
 \begin{code}
 mul′ : Term
-mul′ = μ′ + ⇒ ƛ′ m ⇒ ƛ′ n ⇒
+mul′ = μ′ * ⇒ ƛ′ m ⇒ ƛ′ n ⇒
           case′ m
             [zero⇒ `zero
             |suc m ⇒ (+ · n · (* · m · n)) ]
@@ -125,7 +130,7 @@ mutual
   subs : Id → Term → Id → Term → Term
   subs x N y V with x ≟ y
   subs x N y V | yes _ = N
-  subs x N y V | no _ = N [ x :== V ]
+  subs x N y V | no _ = N [ y :== V ]
 
   _[_:==_] : Term → Id → Term → Term
   (` x) [ y :== V ] with x ≟ y
@@ -135,7 +140,7 @@ mutual
   (N₁ · N₂) [ y :== V ] = (N₁ [ y :== V ]) · (N₂ [ y :== V ])
   `zero [ y :== V ] = `zero
   (`suc N) [ y :== V ] = `suc N [ y :== V ]
-  case L [zero⇒ M |suc x ⇒ N ] [ y :== V ] = case L [ y := V ] [zero⇒ M [ y := V ] |suc x ⇒ subs x N y V ]
+  case L [zero⇒ M |suc x ⇒ N ] [ y :== V ] = case L [ y :== V ] [zero⇒ M [ y :== V ] |suc x ⇒ subs x N y V ]
   (μ x ⇒ N) [ y :== V ] = μ x ⇒ subs x N y V
 \end{code}
 
@@ -355,8 +360,6 @@ proIsomorph = record {
   to∘from : ∀ {M} → (x : Value M ⊎ ∃[ N ](M —→ N)) → to (from x) ≡ x
   to∘from (inj₁ _) = refl
   to∘from (inj₂ _) = refl
-
-
 \end{code}
 
 #### Exercise `progress′`
@@ -411,30 +414,35 @@ defined by mutual recursion with the proof that substitution
 preserves types.
 
 \begin{code}
--- mutual
-  -- rec-subs : ∀ {Γ x y N V N A B}
-  --   → ∅ ⊢ V ⦂ A
-  --   → Γ , y ⦂ A , x ⦂ `ℕ ⊢ N ⦂ B
-  --   -----------------------------
-  --   → Γ , x ⦂ `ℕ ⊢ subs x N y V ⦂ B
-  -- rec-subs {Γ} {x} {y} ⊢V ⊢N with x ≟ y
-  -- rec-subs {Γ} {x} {.x} ⊢V ⊢N | yes refl = drop ⊢N
-  -- rec-subs {Γ} {x} {y} ⊢V ⊢N | no x≠y = {!!}
+mutual
+  rec-subs : ∀ {Γ x y V N A B C}
+    → ∅ ⊢ V ⦂ A
+    → Γ , y ⦂ A , x ⦂ B ⊢ N ⦂ C
+    -----------------------------
+    → Γ , x ⦂ B ⊢ subs x N y V ⦂ C
+  rec-subs {Γ} {x} {y} ⊢V ⊢N with x ≟ y
+  rec-subs {Γ} {x} {.x} ⊢V ⊢N | yes refl = drop ⊢N
+  rec-subs {Γ} {x} {y} ⊢V ⊢N | no x≠y = subst` ⊢V (swap x≠y ⊢N)
 
-  -- subst` : ∀ {Γ x N V A B}
-  --   → ∅ ⊢ V ⦂ A
-  --   → Γ , x ⦂ A ⊢ N ⦂ B
-  --   --------------------
-  --   → Γ ⊢ N [ x :== V ] ⦂ B
 
-  -- subst` {x = y} ⊢V (⊢` Z) = {!!}
-  -- subst` {x = y} ⊢V (⊢` (S x₂ w)) = {!!}
-  -- subst` {x = y} ⊢V (⊢ƛ ⊢M) = {!!}
-  -- subst` {x = y} ⊢V (⊢M · ⊢N) = subst` ⊢V ⊢M · subst` ⊢V ⊢N
-  -- subst` {x = y} ⊢V ⊢zero = ⊢zero
-  -- subst` {x = y} ⊢V (⊢suc ⊢M) = ⊢suc {!!}
-  -- subst` {x = y} ⊢V (⊢case {x = x} ⊢L ⊢M ⊢N) = ⊢case {!subst` ⊢V ⊢L!} {!!} {!!}
-  -- subst` {x = y} ⊢V (⊢μ ⊢M) = ⊢μ {!!}
+  subst` : ∀ {Γ x N V A B}
+    → ∅ ⊢ V ⦂ A
+    → Γ , x ⦂ A ⊢ N ⦂ B
+    --------------------
+    → Γ ⊢ N [ x :== V ] ⦂ B
+
+  subst` {x = y} ⊢V (⊢` {x = x} Z) with x ≟ y
+  subst` {x = y} ⊢V (⊢` {x = y} Z) | yes refl = weaken ⊢V
+  subst` {x = y} ⊢V (⊢` {x = y} Z) | no x≠y = ⊥-elim (x≠y refl)
+  subst` {x = y} ⊢V (⊢` {x = x} (S x≠y w)) with x ≟ y
+  subst` {x = x} ⊢V (⊢` {x = x} (S x≠y w)) | yes refl = ⊥-elim (x≠y refl)
+  subst` {x = y} ⊢V (⊢` {x = x} (S x≠y w)) | no _ = ⊢` w
+  subst` {x = y} ⊢V (⊢ƛ ⊢M) = ⊢ƛ (rec-subs ⊢V ⊢M)
+  subst` {x = y} ⊢V (⊢M · ⊢N) = subst` ⊢V ⊢M · subst` ⊢V ⊢N
+  subst` {x = y} ⊢V ⊢zero = ⊢zero
+  subst` {x = y} ⊢V (⊢suc ⊢M) = ⊢suc (subst` ⊢V ⊢M)
+  subst` {x = y} ⊢V (⊢case {x = x} ⊢L ⊢M ⊢N) = ⊢case (subst` ⊢V ⊢L) (subst` ⊢V ⊢M) (rec-subs ⊢V ⊢N)
+  subst` {x = y} ⊢V (⊢μ ⊢M) = ⊢μ (rec-subs ⊢V ⊢M)
 \end{code}
 
 #### Exercise `mul-example` (recommended)
