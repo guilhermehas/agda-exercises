@@ -1416,17 +1416,47 @@ Stuck→Stuck` : ∀ {M} → Stuck M → Stuck` M
 Stuck→Stuck` ⟨ normal , _ ⟩ (inj₁ ¬normal) = ¬normal normal
 Stuck→Stuck` ⟨ _ , ¬VM ⟩ (inj₂ VM) = ¬VM VM
 
-unstuck` : ∀ {M A}
-  → ∅ ⊢ M ⦂ A
+Stuck`→Stuck : ∀ {M} → Stuck` M → Stuck M
+Stuck`→Stuck stm = ⟨ (λ M→N → stm (inj₁ λ NM → NM M→N)) , (λ VM → stm (inj₂ VM)) ⟩
+
+-- mutual
+--   unstuck` : ∀ {M A}
+--     → ∅ ⊢ M ⦂ A
+--     -----------
+--     → ¬ (Stuck` M)
+--   unstuck` ⊢M stm = unstuck ⊢M (Stuck`→Stuck stm)
+--   -- unstuck ⊢M st = unstuck` ⊢M (Stuck→Stuck` st)
+
+--   unstuck : ∀ {M A}
+--     → ∅ ⊢ M ⦂ A
+--     -----------
+--     → ¬ (Stuck M)
+--   unstuck (⊢` ()) ⟨ NM , ¬VM ⟩
+--   unstuck (⊢ƛ ⊢M) ⟨ NM , ¬VM ⟩ = ¬VM V-ƛ
+--   unstuck (⊢L · ⊢M) ⟨ NM , _ ⟩ = {!!}
+--   unstuck ⊢zero ⟨ NM , ¬VM ⟩ = ¬VM V-zero
+--   unstuck (⊢suc {_} {M} ⊢M) ⟨ NM , ¬VM ⟩ = unstuck` ⊢M stuckm
+--     where
+--     stuckm : Stuck` M
+--     stuckm (inj₁ ¬NM) = ¬NM λ M→N → NM (ξ-suc M→N)
+--     stuckm (inj₂ VSm) = ¬VM (V-suc VSm)
+
+--   unstuck {_} {A} (⊢case {_} {L} {M} {x} {N} ⊢L ⊢M ⊢N) ⟨ NM , _ ⟩ = {!!}
+--   unstuck (⊢μ ⊢M) ⟨ NM , ¬VM ⟩ = NM β-μ
+
+
+progress-unstuck : ∀ {M}
+  → Progress M
   -----------
-  → ¬ (Stuck` M)
-unstuck` ⊢M stm = stm {!!}
+  → ¬ (Stuck M)
+progress-unstuck (step M→N) ⟨ NM , ¬VM ⟩ = NM M→N
+progress-unstuck (done VM) ⟨ NM , ¬VM ⟩ = ¬VM VM
 
 unstuck : ∀ {M A}
   → ∅ ⊢ M ⦂ A
   -----------
   → ¬ (Stuck M)
-unstuck ⊢M st = unstuck` ⊢M (Stuck→Stuck` st)
+unstuck st = progress-unstuck (progress st)
 
 preserves : ∀ {M N A}
   → ∅ ⊢ M ⦂ A
@@ -1442,6 +1472,14 @@ preserves (⊢suc ma) (.(`suc _) —→⟨ ξ-suc x ⟩ mn) = preserves (⊢suc 
 preserves (⊢case LN MA xN⊢aN) (.(case _ [zero⇒ _ |suc _ ⇒ _ ]) —→⟨ L→L ⟩ case`) = 
   preserves (preserve (⊢case LN MA xN⊢aN) L→L) case`
 preserves {M} {N} {A} (⊢μ ma) ((μ _ ⇒ _) —→⟨ β-μ ⟩ mn) = preserves (subst (⊢μ ma) ma) mn
+
+wttdgs : ∀ {M N A}
+  → ∅ ⊢ M ⦂ A
+  → M —↠ N
+  -----------
+  → ¬ (Stuck N)
+wttdgs MA MN = unstuck (preserves MA MN)
+
 \end{code}
 
 
