@@ -380,19 +380,25 @@ whether a well-typed term is a value.
 value? : ∀ {A M} → ∅ ⊢ M ⦂ A → Dec (Value M)
 value? (⊢` ())
 value? (⊢ƛ ma) = yes V-ƛ
-value? (ma · LA) = {!!}
+value? (ma · LA) = no ¬value
+  where
+  ¬value : ∀ {L M} →  ¬ Value (L · M)
+  ¬value ()
 value? ⊢zero = yes V-zero
 value? (⊢suc ma) with value? ma
 value? (⊢suc ma) | yes p = yes (V-suc p)
-value? (⊢suc ma) | no ¬p = no (not-value-nat ma {!¬p!})
+value? (⊢suc ma) | no ¬p = no (¬value-nat ma ¬p)
   where
-  not-value-nat : ∀ {M} → ∅ ⊢ M ⦂ `ℕ → ¬ Value M → ¬ Value (`suc M)
-  not-value-nat exp vm (V-suc vsuc) = vm vsuc
-value? (⊢case ma ma₁ ma₂) = {!!}
-value? (⊢μ ma) = no (not-value (⊢μ ma))
+  ¬value-nat : ∀ {M} → ∅ ⊢ M ⦂ `ℕ → ¬ Value M → ¬ Value (`suc M)
+  ¬value-nat exp vm (V-suc vsuc) = vm vsuc
+value? (⊢case ma ma₁ ma₂) = no ¬value
   where
-  not-value : ∀ {x A M} → ∅ ⊢ μ x ⇒ M ⦂ A → ¬ (Value (μ x ⇒ M))
-  not-value (⊢μ exp) ()
+  ¬value : ∀ {L M x N} → ¬ Value (case L [zero⇒ M |suc x ⇒ N ])
+  ¬value ()
+value? (⊢μ ma) = no (¬value (⊢μ ma))
+  where
+  ¬value : ∀ {x A M} → ∅ ⊢ μ x ⇒ M ⦂ A → ¬ (Value (μ x ⇒ M))
+  ¬value (⊢μ exp) ()
 \end{code}
 
 
@@ -1421,6 +1427,21 @@ unstuck : ∀ {M A}
   -----------
   → ¬ (Stuck M)
 unstuck ⊢M st = unstuck` ⊢M (Stuck→Stuck` st)
+
+preserves : ∀ {M N A}
+  → ∅ ⊢ M ⦂ A
+  → M —↠ N
+  ---------
+  → ∅ ⊢ N ⦂ A
+preserves ma (M _—↠_.∎) = ma
+preserves (⊢` x₁) (.(` _) —→⟨ () ⟩ mn)
+preserves (⊢ƛ ma) (.(ƛ _ ⇒ _) —→⟨ () ⟩ mn)
+preserves (L⦂A₁→A · ma) (.(_ · _) —→⟨ L∘M→M₁ ⟩ M₁→N) = preserves (preserve (L⦂A₁→A · ma) L∘M→M₁) M₁→N
+preserves ⊢zero (.`zero —→⟨ () ⟩ mn)
+preserves (⊢suc ma) (.(`suc _) —→⟨ ξ-suc x ⟩ mn) = preserves (⊢suc (preserve ma x)) mn
+preserves (⊢case LN MA xN⊢aN) (.(case _ [zero⇒ _ |suc _ ⇒ _ ]) —→⟨ L→L ⟩ case`) = 
+  preserves (preserve (⊢case LN MA xN⊢aN) L→L) case`
+preserves {M} {N} {A} (⊢μ ma) ((μ _ ⇒ _) —→⟨ β-μ ⟩ mn) = preserves (subst (⊢μ ma) ma) mn
 \end{code}
 
 
