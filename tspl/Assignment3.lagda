@@ -154,45 +154,44 @@ above are isomorphic.
   → M —↠ N ≃ M —↠′ N
 —↠≃—↠′ = record {
   to = to ;
-  from = {!!} ;
-  from∘to = {!!} ;
-  to∘from = {!!}
+  from = from ;
+  from∘to = from∘to ;
+  to∘from = to∘from
   }
   where
   to : ∀ {M N} → M —↠ N → M —↠′ N
   to (M _—↠_.∎) = refl′
   to (L —→⟨ L—↠M ⟩ M—↠N) = trans′ (step′ L—↠M) (to M—↠N)
 
-  data _start—→_ : Term → Term → Set where
-    eq—→ : ∀ {M} → M start—→ M
-    st—→ : ∀ {M N I} → M —→ I → I —↠′ N → M start—→ N
-    step—→ : ∀ {M N} → M —→ N → M start—→ N
+  _—↠trans_ : ∀ {L M N}
+    → L —↠ M
+    → M —↠ N
+    -----------
+    → L —↠ N
+  (M _—↠_.∎) —↠trans M→N = M→N
+  (L —→⟨ L→M₁ ⟩ M₁→M) —↠trans M→N =
+    L
+    —→⟨ L→M₁ ⟩
+    (M₁→M —↠trans M→N)
 
-  always—→ : ∀ {M N} → M —↠′ N → M start—→ N
-  always—→ (step′ MN) = step—→ MN
-  always—→ refl′ =  eq—→
-  always—→ {M} {N} (trans′ {M} {I} MI IN) with always—→ MI
-  always—→ {M} {N} (trans′ {M} {M} MM MN) | eq—→ = always—→ MN
-  always—→ {M} {N} (trans′ {M} {I} _ IN) | st—→ {M} {I} {P} MP IP = st—→ MP (trans′ IP IN)
-  always—→ {M} {N} (trans′ {M} {I} _ IN) | step—→ MI = st—→ MI IN
+  from : ∀ {M N} → M —↠′ N → M —↠ N
+  from {M} {N} (step′ M—→N) =
+    plfa.Lambda.begin
+      M
+    —→⟨ M—→N ⟩
+      N
+    _—↠_.∎
+  from {M} refl′ = M _—↠_.∎
+  from {L} {N} (trans′ {L} {M}  L—↠′M M—↠′N) = from L—↠′M —↠trans from M—↠′N
 
-  mutual
-    fromStart : ∀ {M N P} → M —↠′ N → M start—→ N → N —↠′ P →  M —↠ P
-    fromStart _ eq—→ MP = from MP
-    fromStart {M} {N} {P} MN (st—→ {M} {N} {I} MI IN) NP = M —→⟨ MI ⟩ {!!}
-    fromStart {M} {N} {P} pr (step—→ MN) NP = M —→⟨ MN ⟩ (from NP)
+  from∘to : ∀ {M N} → (x : M —↠ N) → from (to x) ≡ x
+  from∘to (M _—↠_.∎) = refl
+  from∘to (L —→⟨ L→M ⟩ M→N) = cong (λ x → L —→⟨ L→M ⟩ x) (from∘to M→N)
 
-    from : ∀ {M N} → M —↠′ N → M —↠ N
-    from {M} {N} (step′ M—→N) =
-      plfa.Lambda.begin
-        M
-      —→⟨ M—→N ⟩
-        N
-      _—↠_.∎
-    from {M} refl′ = M _—↠_.∎
-    from {L} {N} (trans′ {L} {M}  L—↠′M M—↠′N) = fromStart L—↠′M (always—→ L—↠′M) M—↠′N
-
-
+  to∘from : ∀ {M N} → (y : M —↠′ N) → to (from y) ≡ y
+  to∘from (step′ x) = {!!}
+  to∘from refl′ = refl
+  to∘from (trans′ x x₁) = {!!}
 \end{code}
 
 #### Exercise `plus-example`
@@ -1406,11 +1405,25 @@ Its opposite is _subject expansion_, which holds if
 Find two counter-examples to subject expansion, one
 with case expressions and one not involving case expressions.
 
+```
+M = case `suc V [zero⇒ P |suc x ⇒ N ]
+P is a value of type A
+N of type B
+and type A ≠ type B
+M can reduce —→ to type A
+or can reduce —→ to type B
+but M does not have type, because P has different type than N
+```
 
 #### Exercise `stuck`
 
 Give an example of an ill-typed term that does get stuck.
 
+```
+s ⦂ `ℕ ⇒ `ℕ
+M = s · `zero ⦂ `ℕ
+M is stucked, because it can not be reduced and it is not a value
+```
 
 #### Exercise `unstuck` (recommended)
 
