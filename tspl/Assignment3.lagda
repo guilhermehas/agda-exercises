@@ -150,13 +150,12 @@ Show that the two notions of reflexive and transitive closure
 above are isomorphic.
 
 \begin{code}
-—↠≃—↠′ : ∀ {M N}
-  → M —↠ N ≃ M —↠′ N
-—↠≃—↠′ = record {
+—↠≲—↠′ : ∀ {M N}
+  → M —↠ N ≲ M —↠′ N
+—↠≲—↠′ = record {
   to = to ;
   from = from ;
-  from∘to = from∘to ;
-  to∘from = to∘from
+  from∘to = from∘to
   }
   where
   to : ∀ {M N} → M —↠ N → M —↠′ N
@@ -187,11 +186,6 @@ above are isomorphic.
   from∘to : ∀ {M N} → (x : M —↠ N) → from (to x) ≡ x
   from∘to (M _—↠_.∎) = refl
   from∘to (L —→⟨ L→M ⟩ M→N) = cong (λ x → L —→⟨ L→M ⟩ x) (from∘to M→N)
-
-  to∘from : ∀ {M N} → (y : M —↠′ N) → to (from y) ≡ y
-  to∘from (step′ x) = {!!}
-  to∘from refl′ = refl
-  to∘from (trans′ x x₁) = {!!}
 \end{code}
 
 #### Exercise `plus-example`
