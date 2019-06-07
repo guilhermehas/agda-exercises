@@ -1424,16 +1424,6 @@ M is stucked, because it can not be reduced and it is not a value
 Provide proofs of the three postulates, `unstuck`, `preserves`, and `wttdgs` above.
 
 \begin{code}
-Stuck` : Term → Set
-Stuck` M = ¬(¬(Normal M) ⊎ Value M)
-
-Stuck→Stuck` : ∀ {M} → Stuck M → Stuck` M
-Stuck→Stuck` ⟨ normal , _ ⟩ (inj₁ ¬normal) = ¬normal normal
-Stuck→Stuck` ⟨ _ , ¬VM ⟩ (inj₂ VM) = ¬VM VM
-
-Stuck`→Stuck : ∀ {M} → Stuck` M → Stuck M
-Stuck`→Stuck stm = ⟨ (λ M→N → stm (inj₁ λ NM → NM M→N)) , (λ VM → stm (inj₂ VM)) ⟩
-
 progress-unstuck : ∀ {M}
   → Progress M
   -----------
@@ -1453,14 +1443,7 @@ preserves : ∀ {M N A}
   ---------
   → ∅ ⊢ N ⦂ A
 preserves ma (M _—↠_.∎) = ma
-preserves (⊢` x₁) (.(` _) —→⟨ () ⟩ mn)
-preserves (⊢ƛ ma) (.(ƛ _ ⇒ _) —→⟨ () ⟩ mn)
-preserves (L⦂A₁→A · ma) (.(_ · _) —→⟨ L∘M→M₁ ⟩ M₁→N) = preserves (preserve (L⦂A₁→A · ma) L∘M→M₁) M₁→N
-preserves ⊢zero (.`zero —→⟨ () ⟩ mn)
-preserves (⊢suc ma) (.(`suc _) —→⟨ ξ-suc x ⟩ mn) = preserves (⊢suc (preserve ma x)) mn
-preserves (⊢case LN MA xN⊢aN) (.(case _ [zero⇒ _ |suc _ ⇒ _ ]) —→⟨ L→L ⟩ case`) = 
-  preserves (preserve (⊢case LN MA xN⊢aN) L→L) case`
-preserves {M} {N} {A} (⊢μ ma) ((μ _ ⇒ _) —→⟨ β-μ ⟩ mn) = preserves (subst (⊢μ ma) ma) mn
+preserves ma (L —→⟨ L→M ⟩ M→N) = preserves (preserve ma L→M) M→N
 
 wttdgs : ∀ {M N A}
   → ∅ ⊢ M ⦂ A
