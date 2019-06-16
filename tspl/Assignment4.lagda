@@ -166,6 +166,11 @@ Remember to indent all code by two spaces.
         -----
       → Γ ⊢ A
 
+    -- Void Type
+    `⊥ :  ∀ {Γ}
+      ---------
+      → Γ ⊢ `⊥
+
     -- functions
 
     ƛ_  :  ∀ {Γ A B}
@@ -209,6 +214,12 @@ Remember to indent all code by two spaces.
     con : ∀ {Γ}
       → ℕ
         -------
+      → Γ ⊢ Nat
+
+    _`+_ : ∀ {Γ}
+      → Γ ⊢ Nat
+      → Γ ⊢ Nat
+      -------
       → Γ ⊢ Nat
 
     _`*_ : ∀ {Γ}
@@ -281,6 +292,7 @@ Remember to indent all code by two spaces.
 
   rename : ∀ {Γ Δ} → (∀ {A} → Γ ∋ A → Δ ∋ A) → (∀ {A} → Γ ⊢ A → Δ ⊢ A)
   rename ρ (` x)          =  ` (ρ x)
+  rename ρ (`⊥)           =  `⊥
   rename ρ (ƛ N)          =  ƛ (rename (ext ρ) N)
   rename ρ (L · M)        =  (rename ρ L) · (rename ρ M)
   rename ρ (`zero)        =  `zero
@@ -288,6 +300,7 @@ Remember to indent all code by two spaces.
   rename ρ (case L M N)   =  case (rename ρ L) (rename ρ M) (rename (ext ρ) N)
   rename ρ (μ N)          =  μ (rename (ext ρ) N)
   rename ρ (con n)        =  con n
+  rename ρ (M `+ N)       =  rename ρ M `+ rename ρ N
   rename ρ (M `* N)       =  rename ρ M `* rename ρ N
   rename ρ (`let M N)     =  `let (rename ρ M) (rename (ext ρ) N)
   rename ρ `⟨ M , N ⟩     =  `⟨ rename ρ M , rename ρ N ⟩
@@ -305,6 +318,7 @@ Remember to indent all code by two spaces.
 
   subst : ∀ {Γ Δ} → (∀ {C} → Γ ∋ C → Δ ⊢ C) → (∀ {C} → Γ ⊢ C → Δ ⊢ C)
   subst σ (` k)          =  σ k
+  subst σ (`⊥)           =  `⊥
   subst σ (ƛ N)          =  ƛ (subst (exts σ) N)
   subst σ (L · M)        =  (subst σ L) · (subst σ M)
   subst σ (`zero)        =  `zero
@@ -312,6 +326,7 @@ Remember to indent all code by two spaces.
   subst σ (case L M N)   =  case (subst σ L) (subst σ M) (subst (exts σ) N)
   subst σ (μ N)          =  μ (subst (exts σ) N)
   subst σ (con n)        =  con n
+  subst σ (M `+ N)       =  subst σ M `+ subst σ N
   subst σ (M `* N)       =  subst σ M `* subst σ N
   subst σ (`let M N)     =  `let (subst σ M) (subst (exts σ) N)
   subst σ `⟨ M , N ⟩     =  `⟨ subst σ M , subst σ N ⟩
@@ -352,6 +367,10 @@ Remember to indent all code by two spaces.
 
 \begin{code}
   data Value : ∀ {Γ A} → Γ ⊢ A → Set where
+
+    V-⊥ : ∀ {Γ}
+      ---------------------------
+      → Value (`⊥ {Γ})
 
     -- functions
 
@@ -442,6 +461,17 @@ not fixed by the given arguments.
 
     -- primitive numbers
 
+    ξ-+₁ : ∀ {Γ} {L L′ M : Γ ⊢ Nat}
+      → L —→ L′
+      -----------------
+      → L `+ M —→ L′ `+ M
+
+    ξ-+₂ : ∀ {Γ} {V M M′ : Γ ⊢ Nat}
+      → Value V
+      → M —→ M′
+      -----------------
+      → V `+ M —→ V `+ M′
+
     ξ-*₁ : ∀ {Γ} {L L′ M : Γ ⊢ Nat}
       → L —→ L′
         -----------------
@@ -452,6 +482,10 @@ not fixed by the given arguments.
       → M —→ M′
         -----------------
       → V `* M —→ V `* M′
+
+    δ-+ : ∀ {Γ c d}
+      -------------------------------------
+      → con {Γ = Γ} c `+ con d —→ con (c + d)
 
     δ-* : ∀ {Γ c d}
         -------------------------------------
@@ -554,6 +588,7 @@ not fixed by the given arguments.
       ----------
     → ¬ (M —→ N)
   V¬—→ V-ƛ          ()
+  V¬—→ V-⊥          ()
   V¬—→ V-zero       ()
   V¬—→ (V-suc VM)   (ξ-suc M—→M′)     =  V¬—→ VM M—→M′
   V¬—→ V-con        ()
@@ -583,6 +618,7 @@ not fixed by the given arguments.
     → Progress M
   progress (` ())
   progress (ƛ N)                              =  done V-ƛ
+  progress (`⊥)                               =  done V-⊥
   progress (L · M) with progress L
   ...    | step L—→L′                         =  step (ξ-·₁ L—→L′)
   ...    | done V-ƛ with progress M
@@ -598,6 +634,11 @@ not fixed by the given arguments.
   ...    | done (V-suc VL)                    =  step (β-suc VL)
   progress (μ N)                              =  step β-μ
   progress (con n)                            =  done V-con
+  progress (L `+ M) with progress L
+  ...    | step L—→L′                         =  step (ξ-+₁ L—→L′)
+  ...    | done V-con with progress M
+  ...        | step M—→M′                     =  step (ξ-+₂ V-con M—→M′)
+  ...        | done V-con                     =  step δ-+
   progress (L `* M) with progress L
   ...    | step L—→L′                         =  step (ξ-*₁ L—→L′)
   ...    | done V-con with progress M
