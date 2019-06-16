@@ -127,6 +127,7 @@ Remember to indent all code by two spaces.
     _`×_  : Type → Type → Type
     _`⊎_  : Type → Type → Type
     `⊤    : Type
+    `⊤²    : Type
     `⊥    : Type
     `List : Type → Type
 \end{code}
@@ -172,10 +173,14 @@ Remember to indent all code by two spaces.
       ---------------
       → Γ ⊢ `⊥
 
-    -- Void Type
+    -- Unit Type
     `⊤ :  ∀ {Γ}
       ---------
       → Γ ⊢ `⊤
+
+    `⊤² :  ∀ {Γ}
+      ---------
+      → Γ ⊢ `⊤²
 
     -- functions
 
@@ -300,6 +305,7 @@ Remember to indent all code by two spaces.
   rename ρ (` x)          =  ` (ρ x)
   rename ρ (`⊥ x)         =  `⊥ (rename ρ x)
   rename ρ (`⊤)           =  `⊤
+  rename ρ (`⊤²)           = `⊤²
   rename ρ (ƛ N)          =  ƛ (rename (ext ρ) N)
   rename ρ (L · M)        =  (rename ρ L) · (rename ρ M)
   rename ρ (`zero)        =  `zero
@@ -327,6 +333,7 @@ Remember to indent all code by two spaces.
   subst σ (` k)          =  σ k
   subst σ (`⊥ N)         =  `⊥ (subst σ N)
   subst σ (`⊤)           =  `⊤
+  subst σ (`⊤²)           = `⊤²
   subst σ (ƛ N)          =  ƛ (subst (exts σ) N)
   subst σ (L · M)        =  (subst σ L) · (subst σ M)
   subst σ (`zero)        =  `zero
@@ -382,6 +389,10 @@ Remember to indent all code by two spaces.
     V-⊤ : ∀ {Γ}
       ---------------------------
       → Value (`⊤ {Γ})
+
+    V-⊤² : ∀ {Γ}
+      ---------------------------
+      → Value (`⊤² {Γ})
 
     -- functions
 
@@ -604,6 +615,7 @@ not fixed by the given arguments.
   V¬—→ V-ƛ           ()
   V¬—→ (V-⊥)         ()
   V¬—→ V-⊤           ()
+  V¬—→ V-⊤²          ()
   V¬—→ V-zero        ()
   V¬—→ (V-suc VM)    (ξ-suc M—→M′)     =  V¬—→ VM M—→M′
   V¬—→ V-con         ()
@@ -635,6 +647,7 @@ not fixed by the given arguments.
   progress (ƛ N)                              =  done V-ƛ
   progress (`⊥ N)                             =  done V-⊥
   progress (`⊤)                               =  done V-⊤
+  progress (`⊤²)                              =  done V-⊤²
   progress (L · M) with progress L
   ...    | step L—→L′                         =  step (ξ-·₁ L—→L′)
   ...    | done V-ƛ with progress M
