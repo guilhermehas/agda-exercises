@@ -86,6 +86,82 @@ values.
 
 Using the evaluator, confirm that two times two is four.
 
+\begin{code}
+  2*2 : ∀ {Γ} → Γ ⊢ `ℕ
+  2*2 = mul · two · two
+
+  mulᶜ : ∀ {Γ A} → Γ ⊢ Ch A ⇒ Ch A ⇒ Ch A
+  mulᶜ = ƛ ƛ ƛ ƛ (# 3 · (# 2 · # 1) · # 0)
+
+  2*2ᶜ : ∀ {Γ} → Γ ⊢ `ℕ
+  2*2ᶜ = mulᶜ · twoᶜ · twoᶜ · sucᶜ · `zero
+
+  2*2-eval : Steps 2*2ᶜ
+  2*2-eval = eval (gas 100) 2*2ᶜ
+
+  2*2-evalued : 2*2-eval ≡
+    steps
+    ((ƛ (ƛ (ƛ (ƛ ` (S (S (S Z))) · (` (S (S Z)) · ` (S Z)) · ` Z)))) ·
+    (ƛ (ƛ ` (S Z) · (` (S Z) · ` Z)))
+    · (ƛ (ƛ ` (S Z) · (` (S Z) · ` Z)))
+    · (ƛ `suc ` Z)
+    · `zero
+    —→⟨ ξ-·₁ (ξ-·₁ (ξ-·₁ (β-ƛ V-ƛ))) ⟩
+    (ƛ
+      (ƛ
+      (ƛ
+        (ƛ (ƛ ` (S Z) · (` (S Z) · ` Z))) · (` (S (S Z)) · ` (S Z)) ·
+        ` Z)))
+    · (ƛ (ƛ ` (S Z) · (` (S Z) · ` Z)))
+    · (ƛ `suc ` Z)
+    · `zero
+    —→⟨ ξ-·₁ (ξ-·₁ (β-ƛ V-ƛ)) ⟩
+    (ƛ
+      (ƛ
+      (ƛ (ƛ ` (S Z) · (` (S Z) · ` Z))) ·
+      ((ƛ (ƛ ` (S Z) · (` (S Z) · ` Z))) · ` (S Z))
+      · ` Z))
+    · (ƛ `suc ` Z)
+    · `zero
+    —→⟨ ξ-·₁ (β-ƛ V-ƛ) ⟩
+    (ƛ
+      (ƛ (ƛ ` (S Z) · (` (S Z) · ` Z))) ·
+      ((ƛ (ƛ ` (S Z) · (` (S Z) · ` Z))) · (ƛ `suc ` Z))
+      · ` Z)
+    · `zero
+    —→⟨ β-ƛ V-zero ⟩
+    (ƛ (ƛ ` (S Z) · (` (S Z) · ` Z))) ·
+    ((ƛ (ƛ ` (S Z) · (` (S Z) · ` Z))) · (ƛ `suc ` Z))
+    · `zero
+    —→⟨ ξ-·₁ (ξ-·₂ V-ƛ (β-ƛ V-ƛ)) ⟩
+    (ƛ (ƛ ` (S Z) · (` (S Z) · ` Z))) ·
+    (ƛ (ƛ `suc ` Z) · ((ƛ `suc ` Z) · ` Z))
+    · `zero
+    —→⟨ ξ-·₁ (β-ƛ V-ƛ) ⟩
+    (ƛ
+      (ƛ (ƛ `suc ` Z) · ((ƛ `suc ` Z) · ` Z)) ·
+      ((ƛ (ƛ `suc ` Z) · ((ƛ `suc ` Z) · ` Z)) · ` Z))
+    · `zero
+    —→⟨ β-ƛ V-zero ⟩
+    (ƛ (ƛ `suc ` Z) · ((ƛ `suc ` Z) · ` Z)) ·
+    ((ƛ (ƛ `suc ` Z) · ((ƛ `suc ` Z) · ` Z)) · `zero)
+    —→⟨ ξ-·₂ V-ƛ (β-ƛ V-zero) ⟩
+    (ƛ (ƛ `suc ` Z) · ((ƛ `suc ` Z) · ` Z)) ·
+    ((ƛ `suc ` Z) · ((ƛ `suc ` Z) · `zero))
+    —→⟨ ξ-·₂ V-ƛ (ξ-·₂ V-ƛ (β-ƛ V-zero)) ⟩
+    (ƛ (ƛ `suc ` Z) · ((ƛ `suc ` Z) · ` Z)) ·
+    ((ƛ `suc ` Z) · `suc `zero)
+    —→⟨ ξ-·₂ V-ƛ (β-ƛ (V-suc V-zero)) ⟩
+    (ƛ (ƛ `suc ` Z) · ((ƛ `suc ` Z) · ` Z)) · `suc (`suc `zero) —→⟨
+    β-ƛ (V-suc (V-suc V-zero)) ⟩
+    (ƛ `suc ` Z) · ((ƛ `suc ` Z) · `suc (`suc `zero)) —→⟨
+    ξ-·₂ V-ƛ (β-ƛ (V-suc (V-suc V-zero))) ⟩
+    (ƛ `suc ` Z) · `suc (`suc (`suc `zero)) —→⟨
+    β-ƛ (V-suc (V-suc (V-suc V-zero))) ⟩
+    `suc (`suc (`suc (`suc `zero))) ∎)
+    (done (V-suc (V-suc (V-suc (V-suc V-zero)))))
+  2*2-evalued = refl
+\end{code}
 
 ## More
 
@@ -114,7 +190,8 @@ Remember to indent all code by two spaces.
   infix  8 `suc_
   infix  9 `_
   infix  9 S_
-  infix  9 #_
+  infix  9 _`∷_
+  infixr 9 #_
 \end{code}
 
 ### Types
@@ -273,6 +350,16 @@ Remember to indent all code by two spaces.
         --------------
       → Γ ⊢ C
 
+    `[] : ∀ {Γ A}
+      -----------
+      → Γ ⊢ `List A
+
+    _`∷_ : ∀ {Γ A}
+      → Γ ⊢ A
+      → Γ ⊢ `List A
+      -------------
+      → Γ ⊢ `List A
+
 \end{code}
 
 ### Abbreviating de Bruijn indices
@@ -305,7 +392,9 @@ Remember to indent all code by two spaces.
   rename ρ (` x)          =  ` (ρ x)
   rename ρ (`⊥ x)         =  `⊥ (rename ρ x)
   rename ρ (`⊤)           =  `⊤
-  rename ρ (`⊤²)           = `⊤²
+  rename ρ (`⊤²)          = `⊤²
+  rename ρ (`[])          = `[]
+  rename ρ (x `∷ xs)      = rename ρ x `∷ rename ρ xs
   rename ρ (ƛ N)          =  ƛ (rename (ext ρ) N)
   rename ρ (L · M)        =  (rename ρ L) · (rename ρ M)
   rename ρ (`zero)        =  `zero
@@ -333,7 +422,9 @@ Remember to indent all code by two spaces.
   subst σ (` k)          =  σ k
   subst σ (`⊥ N)         =  `⊥ (subst σ N)
   subst σ (`⊤)           =  `⊤
-  subst σ (`⊤²)           = `⊤²
+  subst σ (`⊤²)          =  `⊤²
+  subst σ (`[])          =  `[]
+  subst σ (x `∷ xs)      =  subst σ x `∷ subst σ xs
   subst σ (ƛ N)          =  ƛ (subst (exts σ) N)
   subst σ (L · M)        =  (subst σ L) · (subst σ M)
   subst σ (`zero)        =  `zero
@@ -424,6 +515,19 @@ Remember to indent all code by two spaces.
       → Value W
         ----------------
       → Value `⟨ V , W ⟩
+
+    -- Lists
+
+    V-[] : ∀ {Γ A}
+      ---------------------------
+      → Value {Γ = Γ} (`[] {A = A})
+
+    V-∷ : ∀ {Γ A} {V : Γ ⊢ A} {W : Γ ⊢ `List A}
+      → Value V
+      → Value W
+      ----------------
+      → Value (V `∷ W)
+
 \end{code}
 
 Implicit arguments need to be supplied when they are
@@ -448,9 +552,6 @@ not fixed by the given arguments.
       → M —→ M′
         ---------------
       → V · M —→ V · M′
-
-    -- ξ-·⊥ : ∀ {Γ A} {M R : Γ ⊢ `⊥} {N : Γ ⊢ A}
-    --   → M · N —→ R
 
     β-ƛ : ∀ {Γ A B} {N : Γ , A ⊢ B} {V : Γ ⊢ A}
       → Value V
@@ -507,6 +608,18 @@ not fixed by the given arguments.
       → M —→ M′
         -----------------
       → V `* M —→ V `* M′
+
+    ξ-List₁ : ∀ {Γ A} {x x′ : Γ ⊢ A} {xs : Γ ⊢ `List A}
+      → x —→ x′
+      -----------------
+      → x `∷ xs —→ x′ `∷ xs
+
+    ξ-List₂ : ∀ {Γ A} {x : Γ ⊢ A} {xs xs´ : Γ ⊢ `List A}
+      → Value x
+      → xs —→ xs´
+      -----------------
+      → x `∷ xs —→ x `∷ xs´
+
 
     δ-+ : ∀ {Γ c d}
       -------------------------------------
@@ -621,6 +734,9 @@ not fixed by the given arguments.
   V¬—→ V-con         ()
   V¬—→ V-⟨ VM , _ ⟩  (ξ-⟨,⟩₁ M—→M′)    =  V¬—→ VM M—→M′
   V¬—→ V-⟨ _ , VN ⟩  (ξ-⟨,⟩₂ _ N—→N′)  =  V¬—→ VN N—→N′
+  V¬—→ V-[]          ()
+  V¬—→ (V-∷ V W) (ξ-List₁ V→x) = V¬—→ V V→x
+  V¬—→ (V-∷ V W) (ξ-List₂ VV W→xs) = V¬—→ W W→xs
 \end{code}
 
 
@@ -648,6 +764,12 @@ not fixed by the given arguments.
   progress (`⊥ N)                             =  done V-⊥
   progress (`⊤)                               =  done V-⊤
   progress (`⊤²)                              =  done V-⊤²
+  progress (`[])                              =  done V-[]
+  progress (x `∷ xs) with progress x
+  progress (x `∷ xs) | step x→N = step (ξ-List₁ x→N)
+  progress (x `∷ xs) | done Vx with progress xs
+  progress (x `∷ xs) | done Vx | step xs→N = step ( ξ-List₂ Vx xs→N)
+  progress (x `∷ xs) | done Vx | done Vxs = done (V-∷ Vx Vxs)
   progress (L · M) with progress L
   ...    | step L—→L′                         =  step (ξ-·₁ L—→L′)
   ...    | done V-ƛ with progress M
