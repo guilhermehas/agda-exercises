@@ -152,7 +152,7 @@ Remember to indent all code by two spaces.
       → Γ ∋ B
         ---------
       → Γ , A ∋ B
-\end{code}   
+\end{code}
 
 ### Terms and the typing judgment
 
@@ -167,10 +167,10 @@ Remember to indent all code by two spaces.
       → Γ ⊢ A
 
     -- Void Type
-    `⊥ :  ∀ {Γ A}
+    `⊥ :  ∀ {Γ}
       → Γ ⊢ `⊥
-      ---------
-      → Γ ⊢ A
+      ---------------
+      → Γ ⊢ `⊥
 
     -- Void Type
     `⊤ :  ∀ {Γ}
@@ -325,7 +325,7 @@ Remember to indent all code by two spaces.
 
   subst : ∀ {Γ Δ} → (∀ {C} → Γ ∋ C → Δ ⊢ C) → (∀ {C} → Γ ⊢ C → Δ ⊢ C)
   subst σ (` k)          =  σ k
-  subst σ (`⊥ x)         =  `⊥ (subst σ x)
+  subst σ (`⊥ N)         =  `⊥ (subst σ N)
   subst σ (`⊤)           =  `⊤
   subst σ (ƛ N)          =  ƛ (subst (exts σ) N)
   subst σ (L · M)        =  (subst σ L) · (subst σ M)
@@ -375,10 +375,9 @@ Remember to indent all code by two spaces.
 
 \begin{code}
   data Value : ∀ {Γ A} → Γ ⊢ A → Set where
-    V-⊥ : ∀ {Γ A}
-      → (N : Γ ⊢ `⊥)
+    V-⊥ : ∀ {Γ} {N : Γ ⊢ `⊥}
       ---------------------------
-      → Value {Γ = Γ} {A = A} (`⊥ N)
+      → Value {Γ = Γ} (`⊥ N)
 
     V-⊤ : ∀ {Γ}
       ---------------------------
@@ -438,6 +437,9 @@ not fixed by the given arguments.
       → M —→ M′
         ---------------
       → V · M —→ V · M′
+
+    -- ξ-·⊥ : ∀ {Γ A} {M R : Γ ⊢ `⊥} {N : Γ ⊢ A}
+    --   → M · N —→ R
 
     β-ƛ : ∀ {Γ A B} {N : Γ , A ⊢ B} {V : Γ ⊢ A}
       → Value V
@@ -600,7 +602,7 @@ not fixed by the given arguments.
       ----------
     → ¬ (M —→ N)
   V¬—→ V-ƛ           ()
-  V¬—→ (V-⊥ x)       ()
+  V¬—→ (V-⊥)         ()
   V¬—→ V-⊤           ()
   V¬—→ V-zero        ()
   V¬—→ (V-suc VM)    (ξ-suc M—→M′)     =  V¬—→ VM M—→M′
@@ -631,11 +633,10 @@ not fixed by the given arguments.
     → Progress M
   progress (` ())
   progress (ƛ N)                              =  done V-ƛ
-  progress (`⊥ x)                             =  done (V-⊥ x)
+  progress (`⊥ N)                             =  done V-⊥
   progress (`⊤)                               =  done V-⊤
   progress (L · M) with progress L
   ...    | step L—→L′                         =  step (ξ-·₁ L—→L′)
-  ...    | done (V-⊥ x)                       =  {! !}
   ...    | done V-ƛ with progress M
   ...        | step M—→M′                     =  step (ξ-·₂ V-ƛ M—→M′)
   ...        | done VM                        =  step (β-ƛ VM)
@@ -647,23 +648,18 @@ not fixed by the given arguments.
   ...    | step L—→L′                         =  step (ξ-case L—→L′)
   ...    | done V-zero                        =  step β-zero
   ...    | done (V-suc VL)                    =  step (β-suc VL)
-  ...    | done (V-⊥ VL)                      =  {!!}
   progress (μ N)                              =  step β-μ
   progress (con n)                            =  done V-con
   progress (L `+ M) with progress L
   ...    | step L—→L′                         =  step (ξ-+₁ L—→L′)
-  ...    | done (V-⊥ VL)                      =  {!!}
   ...    | done V-con with progress M
   ...        | step M—→M′                     =  step (ξ-+₂ V-con M—→M′)
   ...        | done V-con                     =  step δ-+
-  ...        | done (V-⊥ VM)                  = {!!}
   progress (L `* M) with progress L
   ...    | step L—→L′                         =  step (ξ-*₁ L—→L′)
-  ...    | done (V-⊥ VL)                      =  {!!}
   ...    | done V-con with progress M
   ...        | step M—→M′                     =  step (ξ-*₂ V-con M—→M′)
   ...        | done V-con                     =  step δ-*
-  ...        | done (V-⊥ VL)                  =  {!!}
   progress (`let M N) with progress M
   ...    | step M—→M′                         =  step (ξ-let M—→M′)
   ...    | done VM                            =  step (β-let VM)
@@ -675,15 +671,12 @@ not fixed by the given arguments.
   progress (`proj₁ L) with progress L
   ...    | step L—→L′                         =  step (ξ-proj₁ L—→L′)
   ...    | done (V-⟨ VM , VN ⟩)               =  step (β-proj₁ VM VN)
-  ...    | done (V-⊥ VMN)                     =  {!!}
   progress (`proj₂ L) with progress L
   ...    | step L—→L′                         =  step (ξ-proj₂ L—→L′)
   ...    | done (V-⟨ VM , VN ⟩)               =  step (β-proj₂ VM VN)
-  ...    | done (V-⊥ VMN)                     =  {!!}
   progress (case× L M) with progress L
   ...    | step L—→L′                         =  step (ξ-case× L—→L′)
   ...    | done (V-⟨ VM , VN ⟩)               =  step (β-case× VM VN)
-  ...    | done (V-⊥ VMN)                     =  {!!}
 \end{code}
 
 
