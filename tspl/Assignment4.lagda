@@ -631,50 +631,59 @@ not fixed by the given arguments.
     → Progress M
   progress (` ())
   progress (ƛ N)                              =  done V-ƛ
-  progress (`⊥ x)                             =  done (V-⊥ {!!})
+  progress (`⊥ x)                             =  done (V-⊥ x)
   progress (`⊤)                               =  done V-⊤
-  -- progress (L · M) with progress L
-  -- ...    | step L—→L′                         =  step (ξ-·₁ L—→L′)
-  -- ...    | done V-ƛ with progress M
-  -- ...        | step M—→M′                     =  step (ξ-·₂ V-ƛ M—→M′)
-  -- ...        | done VM                        =  step (β-ƛ VM)
-  -- progress (`zero)                            =  done V-zero
-  -- progress (`suc M) with progress M
-  -- ...    | step M—→M′                         =  step (ξ-suc M—→M′)
-  -- ...    | done VM                            =  done (V-suc VM)
-  -- progress (case L M N) with progress L
-  -- ...    | step L—→L′                         =  step (ξ-case L—→L′)
-  -- ...    | done V-zero                        =  step β-zero
-  -- ...    | done (V-suc VL)                    =  step (β-suc VL)
-  -- progress (μ N)                              =  step β-μ
-  -- progress (con n)                            =  done V-con
-  -- progress (L `+ M) with progress L
-  -- ...    | step L—→L′                         =  step (ξ-+₁ L—→L′)
-  -- ...    | done V-con with progress M
-  -- ...        | step M—→M′                     =  step (ξ-+₂ V-con M—→M′)
-  -- ...        | done V-con                     =  step δ-+
-  -- progress (L `* M) with progress L
-  -- ...    | step L—→L′                         =  step (ξ-*₁ L—→L′)
-  -- ...    | done V-con with progress M
-  -- ...        | step M—→M′                     =  step (ξ-*₂ V-con M—→M′)
-  -- ...        | done V-con                     =  step δ-*
-  -- progress (`let M N) with progress M
-  -- ...    | step M—→M′                         =  step (ξ-let M—→M′)
-  -- ...    | done VM                            =  step (β-let VM)
-  -- progress `⟨ M , N ⟩ with progress M
-  -- ...    | step M—→M′                         =  step (ξ-⟨,⟩₁ M—→M′)
-  -- ...    | done VM with progress N
-  -- ...        | step N—→N′                     =  step (ξ-⟨,⟩₂ VM N—→N′)
-  -- ...        | done VN                        =  done (V-⟨ VM , VN ⟩)
-  -- progress (`proj₁ L) with progress L
-  -- ...    | step L—→L′                         =  step (ξ-proj₁ L—→L′)
-  -- ...    | done (V-⟨ VM , VN ⟩)               =  step (β-proj₁ VM VN)
-  -- progress (`proj₂ L) with progress L
-  -- ...    | step L—→L′                         =  step (ξ-proj₂ L—→L′)
-  -- ...    | done (V-⟨ VM , VN ⟩)               =  step (β-proj₂ VM VN)
-  -- progress (case× L M) with progress L
-  -- ...    | step L—→L′                         =  step (ξ-case× L—→L′)
-  -- ...    | done (V-⟨ VM , VN ⟩)               =  step (β-case× VM VN)
+  progress (L · M) with progress L
+  ...    | step L—→L′                         =  step (ξ-·₁ L—→L′)
+  ...    | done (V-⊥ x)                       =  {! !}
+  ...    | done V-ƛ with progress M
+  ...        | step M—→M′                     =  step (ξ-·₂ V-ƛ M—→M′)
+  ...        | done VM                        =  step (β-ƛ VM)
+  progress (`zero)                            =  done V-zero
+  progress (`suc M) with progress M
+  ...    | step M—→M′                         =  step (ξ-suc M—→M′)
+  ...    | done VM                            =  done (V-suc VM)
+  progress (case L M N) with progress L
+  ...    | step L—→L′                         =  step (ξ-case L—→L′)
+  ...    | done V-zero                        =  step β-zero
+  ...    | done (V-suc VL)                    =  step (β-suc VL)
+  ...    | done (V-⊥ VL)                      =  {!!}
+  progress (μ N)                              =  step β-μ
+  progress (con n)                            =  done V-con
+  progress (L `+ M) with progress L
+  ...    | step L—→L′                         =  step (ξ-+₁ L—→L′)
+  ...    | done (V-⊥ VL)                      =  {!!}
+  ...    | done V-con with progress M
+  ...        | step M—→M′                     =  step (ξ-+₂ V-con M—→M′)
+  ...        | done V-con                     =  step δ-+
+  ...        | done (V-⊥ VM)                  = {!!}
+  progress (L `* M) with progress L
+  ...    | step L—→L′                         =  step (ξ-*₁ L—→L′)
+  ...    | done (V-⊥ VL)                      =  {!!}
+  ...    | done V-con with progress M
+  ...        | step M—→M′                     =  step (ξ-*₂ V-con M—→M′)
+  ...        | done V-con                     =  step δ-*
+  ...        | done (V-⊥ VL)                  =  {!!}
+  progress (`let M N) with progress M
+  ...    | step M—→M′                         =  step (ξ-let M—→M′)
+  ...    | done VM                            =  step (β-let VM)
+  progress `⟨ M , N ⟩ with progress M
+  ...    | step M—→M′                         =  step (ξ-⟨,⟩₁ M—→M′)
+  ...    | done VM with progress N
+  ...        | step N—→N′                     =  step (ξ-⟨,⟩₂ VM N—→N′)
+  ...        | done VN                        =  done (V-⟨ VM , VN ⟩)
+  progress (`proj₁ L) with progress L
+  ...    | step L—→L′                         =  step (ξ-proj₁ L—→L′)
+  ...    | done (V-⟨ VM , VN ⟩)               =  step (β-proj₁ VM VN)
+  ...    | done (V-⊥ VMN)                     =  {!!}
+  progress (`proj₂ L) with progress L
+  ...    | step L—→L′                         =  step (ξ-proj₂ L—→L′)
+  ...    | done (V-⟨ VM , VN ⟩)               =  step (β-proj₂ VM VN)
+  ...    | done (V-⊥ VMN)                     =  {!!}
+  progress (case× L M) with progress L
+  ...    | step L—→L′                         =  step (ξ-case× L—→L′)
+  ...    | done (V-⟨ VM , VN ⟩)               =  step (β-case× VM VN)
+  ...    | done (V-⊥ VMN)                     =  {!!}
 \end{code}
 
 
