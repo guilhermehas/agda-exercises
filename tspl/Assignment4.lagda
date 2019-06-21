@@ -203,6 +203,9 @@ Remember to indent all code by two spaces.
     Nat   : Type
     _`×_  : Type → Type → Type
     _`⊎_  : Type → Type → Type
+\end{code}
+Code I changed
+\begin{code}
     `⊤    : Type
     `⊤²    : Type
     `⊥    : Type
@@ -244,6 +247,9 @@ Remember to indent all code by two spaces.
         -----
       → Γ ⊢ A
 
+\end{code}
+Code I changed
+\begin{code}
     -- Void Type
     `⊥ :  ∀ {Γ}
       → Γ ⊢ `⊥
@@ -259,6 +265,8 @@ Remember to indent all code by two spaces.
       ---------
       → Γ ⊢ `⊤²
 
+\end{code}
+\begin{code}
     -- functions
 
     ƛ_  :  ∀ {Γ A B}
@@ -304,11 +312,16 @@ Remember to indent all code by two spaces.
         -------
       → Γ ⊢ Nat
 
+\end{code}
+Code I changed
+\begin{code}
     _`+_ : ∀ {Γ}
       → Γ ⊢ Nat
       → Γ ⊢ Nat
       -------
       → Γ ⊢ Nat
+\end{code}
+\begin{code}
 
     _`*_ : ∀ {Γ}
       → Γ ⊢ Nat
@@ -390,10 +403,15 @@ Remember to indent all code by two spaces.
 
   rename : ∀ {Γ Δ} → (∀ {A} → Γ ∋ A → Δ ∋ A) → (∀ {A} → Γ ⊢ A → Δ ⊢ A)
   rename ρ (` x)          =  ` (ρ x)
+\end{code}
+Code I changed
+\begin{code}
   rename ρ (`⊥ x)         =  `⊥ (rename ρ x)
   rename ρ (`⊤)           =  `⊤
   rename ρ (`⊤²)          = `⊤²
   rename ρ (`[])          = `[]
+\end{code}
+\begin{code}
   rename ρ (x `∷ xs)      = rename ρ x `∷ rename ρ xs
   rename ρ (ƛ N)          =  ƛ (rename (ext ρ) N)
   rename ρ (L · M)        =  (rename ρ L) · (rename ρ M)
@@ -420,10 +438,16 @@ Remember to indent all code by two spaces.
 
   subst : ∀ {Γ Δ} → (∀ {C} → Γ ∋ C → Δ ⊢ C) → (∀ {C} → Γ ⊢ C → Δ ⊢ C)
   subst σ (` k)          =  σ k
+\end{code}
+Code I changed
+\begin{code}
   subst σ (`⊥ N)         =  `⊥ (subst σ N)
   subst σ (`⊤)           =  `⊤
   subst σ (`⊤²)          =  `⊤²
   subst σ (`[])          =  `[]
+  subst σ (M `+ N)       =  subst σ M `+ subst σ N
+\end{code}
+\begin{code}
   subst σ (x `∷ xs)      =  subst σ x `∷ subst σ xs
   subst σ (ƛ N)          =  ƛ (subst (exts σ) N)
   subst σ (L · M)        =  (subst σ L) · (subst σ M)
@@ -432,7 +456,6 @@ Remember to indent all code by two spaces.
   subst σ (case L M N)   =  case (subst σ L) (subst σ M) (subst (exts σ) N)
   subst σ (μ N)          =  μ (subst (exts σ) N)
   subst σ (con n)        =  con n
-  subst σ (M `+ N)       =  subst σ M `+ subst σ N
   subst σ (M `* N)       =  subst σ M `* subst σ N
   subst σ (`let M N)     =  `let (subst σ M) (subst (exts σ) N)
   subst σ `⟨ M , N ⟩     =  `⟨ subst σ M , subst σ N ⟩
@@ -473,6 +496,9 @@ Remember to indent all code by two spaces.
 
 \begin{code}
   data Value : ∀ {Γ A} → Γ ⊢ A → Set where
+\end{code}
+Code I changed
+\begin{code}
     V-⊥ : ∀ {Γ} {N : Γ ⊢ `⊥}
       ---------------------------
       → Value {Γ = Γ} (`⊥ N)
@@ -484,7 +510,8 @@ Remember to indent all code by two spaces.
     V-⊤² : ∀ {Γ}
       ---------------------------
       → Value (`⊤² {Γ})
-
+\end{code}
+\begin{code}
     -- functions
 
     V-ƛ : ∀ {Γ A B} {N : Γ , A ⊢ B}
@@ -516,6 +543,9 @@ Remember to indent all code by two spaces.
         ----------------
       → Value `⟨ V , W ⟩
 
+\end{code}
+Code I changed
+\begin{code}
     -- Lists
 
     V-[] : ∀ {Γ A}
@@ -587,6 +617,9 @@ not fixed by the given arguments.
 
     -- primitive numbers
 
+\end{code}
+Code I changed
+\begin{code}
     ξ-+₁ : ∀ {Γ} {L L′ M : Γ ⊢ Nat}
       → L —→ L′
       -----------------
@@ -598,6 +631,8 @@ not fixed by the given arguments.
       -----------------
       → V `+ M —→ V `+ M′
 
+\end{code}
+\begin{code}
     ξ-*₁ : ∀ {Γ} {L L′ M : Γ ⊢ Nat}
       → L —→ L′
         -----------------
@@ -609,6 +644,9 @@ not fixed by the given arguments.
         -----------------
       → V `* M —→ V `* M′
 
+\end{code}
+Code I changed
+\begin{code}
     ξ-List₁ : ∀ {Γ A} {x x′ : Γ ⊢ A} {xs : Γ ⊢ `List A}
       → x —→ x′
       -----------------
@@ -620,11 +658,12 @@ not fixed by the given arguments.
       -----------------
       → x `∷ xs —→ x `∷ xs´
 
-
     δ-+ : ∀ {Γ c d}
       -------------------------------------
       → con {Γ = Γ} c `+ con d —→ con (c + d)
 
+\end{code}
+\begin{code}
     δ-* : ∀ {Γ c d}
         -------------------------------------
       → con {Γ = Γ} c `* con d —→ con (c * d)
@@ -726,14 +765,21 @@ not fixed by the given arguments.
       ----------
     → ¬ (M —→ N)
   V¬—→ V-ƛ           ()
+\end{code}
+Code I changed
+\begin{code}
   V¬—→ (V-⊥)         ()
   V¬—→ V-⊤           ()
   V¬—→ V-⊤²          ()
+\end{code}
+\begin{code}
   V¬—→ V-zero        ()
   V¬—→ (V-suc VM)    (ξ-suc M—→M′)     =  V¬—→ VM M—→M′
   V¬—→ V-con         ()
   V¬—→ V-⟨ VM , _ ⟩  (ξ-⟨,⟩₁ M—→M′)    =  V¬—→ VM M—→M′
   V¬—→ V-⟨ _ , VN ⟩  (ξ-⟨,⟩₂ _ N—→N′)  =  V¬—→ VN N—→N′
+\end{code}
+\begin{code}
   V¬—→ V-[]          ()
   V¬—→ (V-∷ V W) (ξ-List₁ V→x) = V¬—→ V V→x
   V¬—→ (V-∷ V W) (ξ-List₂ VV W→xs) = V¬—→ W W→xs
@@ -761,6 +807,9 @@ not fixed by the given arguments.
     → Progress M
   progress (` ())
   progress (ƛ N)                              =  done V-ƛ
+\end{code}
+Code I changed
+\begin{code}
   progress (`⊥ N)                             =  done V-⊥
   progress (`⊤)                               =  done V-⊤
   progress (`⊤²)                              =  done V-⊤²
@@ -770,6 +819,8 @@ not fixed by the given arguments.
   progress (x `∷ xs) | done Vx with progress xs
   progress (x `∷ xs) | done Vx | step xs→N = step ( ξ-List₂ Vx xs→N)
   progress (x `∷ xs) | done Vx | done Vxs = done (V-∷ Vx Vxs)
+\end{code}
+\begin{code}
   progress (L · M) with progress L
   ...    | step L—→L′                         =  step (ξ-·₁ L—→L′)
   ...    | done V-ƛ with progress M
