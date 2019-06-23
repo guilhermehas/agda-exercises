@@ -471,6 +471,104 @@ infer the corresponding inherently typed term.
 Show that erasure of the inferred typing yields your definition of
 multiplication from Chapter [DeBruijn][plfa.DeBruijn].
 
+\begin{code}
+  _≠_ : ∀ (x y : Id) → x ≢ y
+  x ≠ y  with x ≟ y
+  ...       | no  x≢y  =  x≢y
+  ...       | yes _    =  ⊥-elim impossible
+    where postulate impossible : ⊥
+
+  Ch : Type
+  Ch = (`ℕ ⇒ `ℕ) ⇒ `ℕ ⇒ `ℕ
+
+  sucᶜ : Term⁻
+  sucᶜ = ƛ "x" ⇒ `suc (` "x" ↑)
+
+  twoᶜ : Term⁻
+  twoᶜ = (ƛ "s" ⇒ ƛ "z" ⇒ ` "s" · (` "s" · (` "z" ↑) ↑) ↑)
+
+  mulᶜ : Term⁺
+  mulᶜ = (ƛ "m" ⇒ ƛ "n" ⇒ ƛ "s" ⇒ ƛ "z" ⇒
+              ` "m" · (` "s" ↑) · (` "n" · (` "s" ↑) · (` "z" ↑) ↑) ↑)
+              ↓ (Ch ⇒ Ch ⇒ Ch)
+
+  2*2 : Term⁺
+  2*2 = mul · two · two
+
+  ⊢2*2 : ∅ ⊢ 2*2 ↑ `ℕ
+  ⊢2*2 = ⊢↓
+           (⊢μ
+            (⊢ƛ
+             (⊢ƛ
+              (⊢case (⊢` (S ("m" ≠ "n") Z)) ⊢zero
+               (⊢↑
+                (⊢↓
+                 (⊢μ
+                  (⊢ƛ
+                   (⊢ƛ
+                    (⊢case (⊢` (S ("m" ≠ "n") Z))
+                     (⊢↑ (⊢` Z) refl)
+                     (⊢suc
+                      (⊢↑
+                       (⊢`
+                        (S ("p" ≠ "m")
+                        (S ("p" ≠ "n")
+                        (S ("p" ≠ "m") Z)))
+                        · ⊢↑ (⊢` Z) refl
+                        · ⊢↑ (⊢` (S ("n" ≠ "m") Z)) refl)
+                       refl))))))
+                 · ⊢↑ (⊢` Z) refl
+                 ·
+                 ⊢↑
+                 (⊢`
+                 (S ("mul" ≠ "m")
+                 (S ("mul" ≠ "n")
+                 (S ("mul" ≠ "m") Z)))
+                  · ⊢↑ (⊢` Z) refl
+                  · ⊢↑ (⊢` (S ("n" ≠ "m") Z)) refl)
+                 refl)
+                refl)))))
+           · ⊢suc (⊢suc ⊢zero) · (⊢suc (⊢suc ⊢zero))
+
+  dbtwo : ∀ {Γ} → Γ DB.⊢ DB.`ℕ
+  dbtwo = DB.`suc DB.`suc DB.`zero
+
+  dbplus : ∀ {Γ} → Γ DB.⊢ DB.`ℕ DB.⇒ DB.`ℕ DB.⇒ DB.`ℕ
+  dbplus = DB.μ DB.ƛ DB.ƛ (DB.case (DB.# 1) (DB.# 0) (DB.`suc (DB.# 3 DB.· DB.# 0 DB.· DB.# 1)))
+
+  dbmul : ∀ {Γ} → Γ DB.⊢ DB.`ℕ DB.⇒ DB.`ℕ DB.⇒ DB.`ℕ
+  dbmul = DB.μ DB.ƛ DB.ƛ (DB.case (DB.# 0) DB.`zero (dbplus DB.· (DB.# 1) DB.· (DB.# 3 DB.· DB.# 0 DB.· DB.# 1)))
+
+  db2*2 : ∀ {Γ} → Γ DB.⊢ DB.`ℕ
+  db2*2 = dbmul DB.· dbtwo DB.· dbtwo
+
+  dbCh : DB.Type → DB.Type
+  dbCh A =  (A DB.⇒ A) DB.⇒ A DB.⇒ A
+
+  dbtwoᶜ : ∀ {Γ A} → Γ DB.⊢ dbCh A
+  dbtwoᶜ = DB.ƛ DB.ƛ (DB.# 1 DB.· (DB.# 1 DB.· DB.# 0))
+
+  dbsucᶜ : ∀ {Γ} → Γ DB.⊢ DB.`ℕ DB.⇒ DB.`ℕ
+  dbsucᶜ = DB.ƛ DB.`suc (DB.# 0)
+
+  dbmulᶜ : ∀ {Γ A} → Γ DB.⊢ (dbCh A DB.⇒ (dbCh A DB.⇒ dbCh A))
+  dbmulᶜ = DB.ƛ DB.ƛ DB.ƛ DB.ƛ (DB.# 3 DB.· (DB.# 2 DB.· DB.# 1) DB.· DB.# 0)
+
+  db2*2ᶜ : ∀ {Γ} → Γ DB.⊢ DB.`ℕ
+  db2*2ᶜ = dbmulᶜ DB.· dbtwoᶜ DB.· dbtwoᶜ DB.· dbsucᶜ DB.· DB.`zero
+
+  2*2ᶜ : Term⁺
+  2*2ᶜ = mulᶜ · twoᶜ · twoᶜ · sucᶜ · `zero
+
+  _ : synthesize ∅ 2*2 ≡ yes ⟨ `ℕ , ⊢2*2 ⟩
+  _ = refl
+
+  -- _ : ∥ ⊢2*2 ∥⁺ ≡ db2*2
+  -- _ = refl
+
+  -- _ : ∥ ⊢2*2ᶜ ∥⁺ ≡ db2*2ᶜ
+  -- _ = refl
+\end{code}
 
 #### Exercise `inference-products` (recommended)
 
