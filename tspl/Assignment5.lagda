@@ -583,6 +583,11 @@ Chapter [More][plfa.More].
 
 ## Untyped
 
+\begin{code}
+module Untyped where
+  open import plfa.Untyped
+\end{code}
+
 #### Exercise (`Type≃⊤`)
 
 Show that `Type` is isomorphic to `⊤`, the unit type.
@@ -615,6 +620,78 @@ Use the encodings above to translate your definition of
 multiplication from previous chapters with the Scott
 representation and the encoding of the fixpoint operator.
 Confirm that two times two is four.
+
+\begin{code}
+  mul : ∀ {Γ} → Γ ⊢ ★
+  mul = μ ƛ ƛ (case (# 0) `zero (plus · # 1 · (# 3 · # 0 · # 1)))
+
+  mulᶜ : ∀ {Γ} → Γ ⊢ ★
+  mulᶜ = ƛ ƛ ƛ ƛ (# 3 · (# 2 · # 1) · # 0)
+
+  2*2ᶜ : ∅ ⊢ ★
+  2*2ᶜ = mulᶜ · twoᶜ · twoᶜ
+
+  _ : eval (gas 100) 2*2ᶜ ≡
+    steps
+      ((ƛ
+        (ƛ
+        (ƛ (ƛ (` (S (S (S Z)))) · ((` (S (S Z))) · (` (S Z))) · (` Z)))))
+      · (ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z))))
+      · (ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z))))
+      —→⟨ ξ₁ ap β ⟩
+      (ƛ
+        (ƛ
+        (ƛ
+          (ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z)))) ·
+          ((` (S (S Z))) · (` (S Z)))
+          · (` Z))))
+      · (ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z))))
+      —→⟨ β ⟩
+      ƛ
+      (ƛ
+        (ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z)))) ·
+        ((ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z)))) · (` (S Z)))
+        · (` Z))
+      —→⟨ ζ (ζ (ξ₁ ap β)) ⟩
+      ƛ
+      (ƛ
+        (ƛ
+        (ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z)))) · (` (S (S Z))) ·
+        ((ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z)))) · (` (S (S Z))) · (` Z)))
+        · (` Z))
+      —→⟨ ζ (ζ β) ⟩
+      ƛ
+      (ƛ
+        (ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z)))) · (` (S Z)) ·
+        ((ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z)))) · (` (S Z)) · (` Z)))
+      —→⟨ ζ (ζ (ξ₁ ap β)) ⟩
+      ƛ
+      (ƛ
+        (ƛ (` (S (S Z))) · ((` (S (S Z))) · (` Z))) ·
+        ((ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z)))) · (` (S Z)) · (` Z)))
+      —→⟨ ζ (ζ β) ⟩
+      ƛ
+      (ƛ
+        (` (S Z)) ·
+        ((` (S Z)) ·
+        ((ƛ (ƛ (` (S Z)) · ((` (S Z)) · (` Z)))) · (` (S Z)) · (` Z))))
+      —→⟨ ζ (ζ (ξ₂ (` (S Z)) (ξ₂ (` (S Z)) (ξ₁ ap β)))) ⟩
+      ƛ
+      (ƛ
+        (` (S Z)) ·
+        ((` (S Z)) ·
+        ((ƛ (` (S (S Z))) · ((` (S (S Z))) · (` Z))) · (` Z))))
+      —→⟨ ζ (ζ (ξ₂ (` (S Z)) (ξ₂ (` (S Z)) β))) ⟩
+      ƛ (ƛ (` (S Z)) · ((` (S Z)) · ((` (S Z)) · ((` (S Z)) · (` Z)))))
+      ∎)
+      (done
+      (ƛ
+        (ƛ
+        (′
+          (` (S Z)) ·
+          (′ (` (S Z)) · (′ (` (S Z)) · (′ (` (S Z)) · (′ (` Z)))))))))
+  _ = refl
+\end{code}
 
 #### Exercise `encode-more` (stretch)
 
