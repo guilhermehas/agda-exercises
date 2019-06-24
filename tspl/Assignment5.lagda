@@ -148,9 +148,11 @@ Remember to indent all code by two spaces.
     `suc_                    : Term⁻ → Term⁻
     `case_[zero⇒_|suc_⇒_]    : Term⁺ → Term⁻ → Id → Term⁻ → Term⁻
   -- begin
+
+  -- Product
     `⟨_,_⟩                   : Term⁻ → Term⁻ → Term⁻
-    `proj₁_                   : Term⁺ → Term⁻
-    `proj₂_                   : Term⁺ → Term⁻
+    `proj₁_                   : Term⁻ → Term⁻
+    `proj₂_                   : Term⁻ → Term⁻
   -- end
     μ_⇒_                     : Id → Term⁻ → Term⁻
     _↑                       : Term⁺ → Term⁻
@@ -238,7 +240,7 @@ Remember to indent all code by two spaces.
     -- begin
     ⊢⟨,⟩ : ∀ {Γ A B M N}
       → Γ ⊢ M ↓ A
-      → Γ ⊢ M ↓ B
+      → Γ ⊢ N ↓ B
       ----------------
       → Γ ⊢ `⟨ M , N ⟩ ↓ A `× B
     -- end
@@ -253,7 +255,6 @@ Remember to indent all code by two spaces.
       → A ≡ B
         -------------
       → Γ ⊢ (M ↑) ↓ B
-    -- end
 \end{code}
 
 
@@ -428,7 +429,7 @@ Remember to indent all code by two spaces.
   inherit Γ (`suc M) (A `× B)   = no λ()
   inherit Γ `⟨ M , N ⟩ (A `× B) with inherit Γ M A
   ... | no ¬∃ = no (λ{ (⊢⟨,⟩ ⊢A ⊢B) → ¬∃ ⊢A })
-  ... | yes ⊢A with inherit Γ M B
+  ... | yes ⊢A with inherit Γ N B
   ...   | no ¬∃   = no  λ{ (⊢⟨,⟩ ⊢A ⊢B) → ¬∃ ⊢B }
   ...   | yes ⊢B  = yes (⊢⟨,⟩ ⊢A ⊢B)
   inherit Γ (`proj₁ _) `ℕ       = no λ()
@@ -611,12 +612,6 @@ multiplication from Chapter [DeBruijn][plfa.DeBruijn].
 
   _ : synthesize ∅ 2*2 ≡ yes ⟨ `ℕ , ⊢2*2 ⟩
   _ = refl
-
-  -- _ : ∥ ⊢2*2 ∥⁺ ≡ db2*2
-  -- _ = refl
-
-  -- _ : ∥ ⊢2*2ᶜ ∥⁺ ≡ db2*2ᶜ
-  -- _ = refl
 \end{code}
 
 #### Exercise `inference-products` (recommended)
