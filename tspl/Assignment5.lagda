@@ -795,6 +795,8 @@ module ExtendedUntyped where
       → Γ ⊢ ★
 
   -- begin
+
+  -- Product
     `⟨_,_⟩ : ∀ {Γ}
       → Γ ⊢ ★
       → Γ ⊢ ★
@@ -810,6 +812,28 @@ module ExtendedUntyped where
       → Γ ⊢ ★
       -----------
       → Γ ⊢ ★
+
+  -- List
+    `[] : ∀ {Γ}
+    -----------
+      → Γ ⊢ ★
+
+    _`∷_ : ∀ {Γ}
+      → Γ ⊢ ★
+      → Γ ⊢ ★
+    -----------
+      → Γ ⊢ ★
+
+    `head_ : ∀ {Γ}
+      → Γ ⊢ ★
+      -----------
+      → Γ ⊢ ★
+
+    `tail_ : ∀ {Γ}
+      → Γ ⊢ ★
+      -----------
+      → Γ ⊢ ★
+
   -- end
 
 
@@ -851,6 +875,10 @@ module ExtendedUntyped where
   rename ρ `⟨ L , M ⟩     =  `⟨ rename ρ L , rename ρ M ⟩
   rename ρ (`proj₁ L)     =  `proj₁ (rename ρ L)
   rename ρ (`proj₂ M)     =  `proj₂ (rename ρ M)
+  rename ρ (`[])          =  `[]
+  rename ρ (x `∷ xs)      =  rename ρ x `∷  rename ρ xs
+  rename ρ (`head xs)     =  `head (rename ρ xs)
+  rename ρ (`tail xs)     =  `tail (rename ρ xs)
   -- end
 
 
@@ -871,6 +899,10 @@ module ExtendedUntyped where
   subst σ `⟨ L , M ⟩     =  `⟨ subst σ L , subst σ M ⟩
   subst σ (`proj₁ L)      =  `proj₁ (subst σ L)
   subst σ (`proj₂ M)      =  `proj₂ (subst σ M)
+  subst σ (`[])           =  `[]
+  subst σ (x `∷ xs)       =  subst σ x `∷ subst σ xs
+  subst σ (`head xs)      =  `head (subst σ xs)
+  subst σ (`tail xs)      =  `tail (subst σ xs)
   -- end
 
   subst-zero : ∀ {Γ B} → (Γ ⊢ B) → ∀ {A} → (Γ , B ∋ A) → (Γ ⊢ A)
@@ -905,6 +937,16 @@ module ExtendedUntyped where
       → Neutral M
       ---------------
       → Neutral `⟨ L , M ⟩
+
+    `[]  : ∀ {Γ}
+      ---------------
+      → Neutral {Γ} `[]
+
+    _`∷_  : ∀ {Γ} {L M : Γ ⊢ ★}
+      → Neutral L
+      → Neutral M
+      ---------------
+      → Neutral (L `∷ M)
   -- end
 
   data Normal where
@@ -956,17 +998,66 @@ module ExtendedUntyped where
       → ƛ N —→ ƛ N′
 
   -- begin
-    β-proj₁ : ∀ {Γ} {V : Γ ⊢ ★} {W : Γ ⊢ ★}
+
+    -- Products
+
+    ξ-⟨,⟩₁ : ∀ {Γ} {M M′ N : Γ ⊢ ★}
+      → M —→ M′
+      -------------------------
+      → `⟨ M , N ⟩ —→ `⟨ M′ , N ⟩
+
+    ξ-⟨,⟩₂ : ∀ {Γ} {V N N′ : Γ ⊢ ★}
+      → Neutral V
+      → N —→ N′
+      -------------------------
+      → `⟨ V , N ⟩ —→ `⟨ V , N′ ⟩
+
+    ξ-proj₁ : ∀ {Γ} {L L′ : Γ ⊢ ★}
+      → L —→ L′
+      ---------------------
+      → `proj₁ L —→ `proj₁ L′
+
+    ξ-proj₂ : ∀ {Γ} {L L′ : Γ ⊢ ★}
+      → L —→ L′
+      ---------------------
+      → `proj₂ L —→ `proj₂ L′
+
+    β-proj₁ : ∀ {Γ} {V W : Γ ⊢ ★}
       → Neutral V
       → Neutral W
       ----------------------
       → `proj₁ `⟨ V , W ⟩ —→ V
 
-    β-proj₂ : ∀ {Γ} {V : Γ ⊢ ★} {W : Γ ⊢ ★}
+    β-proj₂ : ∀ {Γ} {V W : Γ ⊢ ★}
       → Neutral V
       → Neutral W
       ----------------------
       → `proj₂ `⟨ V , W ⟩ —→ W
+
+    -- Lists
+
+    ξ-cons₁ : ∀ {Γ} {x x´ xs : Γ ⊢ ★}
+      → x —→ x´
+      ----------------------
+      → x `∷ xs —→ x´ `∷ xs
+
+    ξ-cons₂ : ∀ {Γ} {x xs xs´ : Γ ⊢ ★}
+      → Neutral x
+      → xs —→ xs´
+      ----------------------
+      → x `∷ xs —→ x `∷ xs´
+
+    β-head : ∀ {Γ} {x xs : Γ ⊢ ★}
+      → Neutral x
+      → Neutral xs
+      ----------------------
+      → `head (x `∷ xs) —→ x
+
+    β-tail : ∀ {Γ} {x xs : Γ ⊢ ★}
+      → Neutral x
+      → Neutral xs
+      ----------------------
+      → `tail (x `∷ xs) —→ xs
   -- end
 
 \end{code}
