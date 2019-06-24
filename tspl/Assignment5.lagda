@@ -739,3 +739,226 @@ Confirm that two times two is four.
 Along the lines above, encode all of the constructs of
 Chapter [More][plfa.More],
 save for primitive numbers, in the untyped lambda calculus.
+
+\begin{code}
+module ExtendedUntyped where
+  infix  4  _⊢_
+  infix  4  _∋_
+  infixl 5  _,_
+
+  infix  6  ƛ_
+  -- infix  6  ′_
+  infixl 7  _·_
+
+  data Type : Set where
+    ★ : Type
+
+  data Context : Set where
+    ∅   : Context
+    _,_ : Context → Type → Context
+
+  data _∋_ : Context → Type → Set where
+
+    Z : ∀ {Γ A}
+      ---------
+      → Γ , A ∋ A
+
+    S_ : ∀ {Γ A B}
+      → Γ ∋ A
+      ---------
+      → Γ , B ∋ A
+
+  data _⊢_ : Context → Type → Set where
+
+    `_ : ∀ {Γ A}
+      → Γ ∋ A
+      -----
+      → Γ ⊢ A
+
+    ƛ_  :  ∀ {Γ}
+      → Γ , ★ ⊢ ★
+      ---------
+      → Γ ⊢ ★
+
+    _·_ : ∀ {Γ}
+      → Γ ⊢ ★
+      → Γ ⊢ ★
+      ------
+      → Γ ⊢ ★
+
+  -- begin
+    `⟨_,_⟩ : ∀ {Γ}
+      → Γ ⊢ ★
+      → Γ ⊢ ★
+      -----------
+      → Γ ⊢ ★
+
+    `proj₁ : ∀ {Γ}
+      → Γ ⊢ ★
+      -----------
+      → Γ ⊢ ★
+
+    `proj₂ : ∀ {Γ}
+      → Γ ⊢ ★
+      -----------
+      → Γ ⊢ ★
+  -- end
+
+
+  count : ∀ {Γ} → ℕ → Γ ∋ ★
+  count {Γ , ★} zero     =  Z
+  count {Γ , ★} (suc n)  =  S (count n)
+  count {∅}     _        =  ⊥-elim impossible
+    where postulate impossible : ⊥
+
+  #_ : ∀ {Γ} → ℕ → Γ ⊢ ★
+  # n  =  ` count n
+
+  twoᶜ : ∀ {Γ} → Γ ⊢ ★
+  twoᶜ = ƛ ƛ (# 1 · (# 1 · # 0))
+
+  fourᶜ : ∀ {Γ} → Γ ⊢ ★
+  fourᶜ = ƛ ƛ (# 1 · (# 1 · (# 1 · (# 1 · # 0))))
+
+  plusᶜ : ∀ {Γ} → Γ ⊢ ★
+  plusᶜ = ƛ ƛ ƛ ƛ (# 3 · # 1 · (# 2 · # 1 · # 0))
+
+  2+2ᶜ : ∅ ⊢ ★
+  2+2ᶜ = plusᶜ · twoᶜ · twoᶜ
+
+  ext : ∀ {Γ Δ} → (∀ {A} → Γ ∋ A → Δ ∋ A)
+    -----------------------------------
+    → (∀ {A B} → Γ , B ∋ A → Δ , B ∋ A)
+  ext ρ Z      =  Z
+  ext ρ (S x)  =  S (ρ x)
+
+  rename : ∀ {Γ Δ}
+    → (∀ {A} → Γ ∋ A → Δ ∋ A)
+    ------------------------
+    → (∀ {A} → Γ ⊢ A → Δ ⊢ A)
+  rename ρ (` x)          =  ` (ρ x)
+  rename ρ (ƛ N)          =  ƛ (rename (ext ρ) N)
+  rename ρ (L · M)        =  (rename ρ L) · (rename ρ M)
+  -- begin
+  rename ρ `⟨ L , M ⟩     =  `⟨ rename ρ L , rename ρ M ⟩
+  rename ρ (`proj₁ L)     =  `proj₁ (rename ρ L)
+  rename ρ (`proj₂ M)     =  `proj₂ (rename ρ M)
+  -- end
+
+
+  exts : ∀ {Γ Δ} → (∀ {A} → Γ ∋ A → Δ ⊢ A)
+    ----------------------------------
+    → (∀ {A B} → Γ , B ∋ A → Δ , B ⊢ A)
+  exts σ Z      =  ` Z
+  exts σ (S x)  =  rename S_ (σ x)
+
+  subst : ∀ {Γ Δ}
+    → (∀ {A} → Γ ∋ A → Δ ⊢ A)
+    ------------------------
+    → (∀ {A} → Γ ⊢ A → Δ ⊢ A)
+  subst σ (` k)          =  σ k
+  subst σ (ƛ N)          =  ƛ (subst (exts σ) N)
+  subst σ (L · M)        =  (subst σ L) · (subst σ M)
+  -- begin
+  subst σ `⟨ L , M ⟩     =  `⟨ subst σ L , subst σ M ⟩
+  subst σ (`proj₁ L)      =  `proj₁ (subst σ L)
+  subst σ (`proj₂ M)      =  `proj₂ (subst σ M)
+  -- end
+
+  subst-zero : ∀ {Γ B} → (Γ ⊢ B) → ∀ {A} → (Γ , B ∋ A) → (Γ ⊢ A)
+  subst-zero M Z      =  M
+  subst-zero M (S x)  =  ` x
+
+  _[_] : ∀ {Γ A B}
+    → Γ , B ⊢ A
+    → Γ ⊢ B
+    ---------
+    → Γ ⊢ A
+  _[_] {Γ} {A} {B} N M =  subst {Γ , B} {Γ} (subst-zero M) {A} N
+
+  data Neutral : ∀ {Γ A} → Γ ⊢ A → Set
+  data Normal  : ∀ {Γ A} → Γ ⊢ A → Set
+
+  data Neutral where
+
+    `_  : ∀ {Γ A} (x : Γ ∋ A)
+      -------------
+      → Neutral (` x)
+
+    _·_  : ∀ {Γ} {L M : Γ ⊢ ★}
+      → Neutral L
+      → Normal M
+      ---------------
+      → Neutral (L · M)
+
+  -- begin
+    `⟨_,_⟩  : ∀ {Γ} {L M : Γ ⊢ ★}
+      → Neutral L
+      → Neutral M
+      ---------------
+      → Neutral `⟨ L , M ⟩
+  -- end
+
+  data Normal where
+
+    ′_ : ∀ {Γ A} {M : Γ ⊢ A}
+      → Neutral M
+      ---------
+      → Normal M
+
+    ƛ_  : ∀ {Γ} {N : Γ , ★ ⊢ ★}
+      → Normal N
+      ------------
+      → Normal (ƛ N)
+
+  #′_ : ∀ {Γ} (n : ℕ) → Neutral {Γ} (# n)
+  #′ n  =  ` count n
+
+
+
+  data Application : ∀ {Γ A} → Γ ⊢ A → Set where
+
+    ap : ∀ {Γ} {L M : Γ ⊢ ★}
+      -------------------
+      → Application (L · M)
+
+  infix 2 _—→_
+
+  data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
+
+    ξ₁ : ∀ {Γ} {L L′ M : Γ ⊢ ★}
+      → Application L
+      → L —→ L′
+      ----------------
+      → L · M —→ L′ · M
+
+    ξ₂ : ∀ {Γ} {L M M′ : Γ ⊢ ★}
+      → Neutral L
+      → M —→ M′
+      ----------------
+      → L · M —→ L · M′
+
+    β : ∀ {Γ} {N : Γ , ★ ⊢ ★} {M : Γ ⊢ ★}
+      ---------------------------------
+      → (ƛ N) · M —→ N [ M ]
+
+    ζ : ∀ {Γ} {N N′ : Γ , ★ ⊢ ★}
+      → N —→ N′
+      -----------
+      → ƛ N —→ ƛ N′
+
+  -- begin
+    β-proj₁ : ∀ {Γ} {V : Γ ⊢ ★} {W : Γ ⊢ ★}
+      → Neutral V
+      → Neutral W
+      ----------------------
+      → `proj₁ `⟨ V , W ⟩ —→ V
+
+    β-proj₂ : ∀ {Γ} {V : Γ ⊢ ★} {W : Γ ⊢ ★}
+      → Neutral V
+      → Neutral W
+      ----------------------
+      → `proj₂ `⟨ V , W ⟩ —→ W
+  -- end
+
+\end{code}
