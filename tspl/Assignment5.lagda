@@ -147,9 +147,11 @@ Remember to indent all code by two spaces.
     `zero                    : Term⁻
     `suc_                    : Term⁻ → Term⁻
     `case_[zero⇒_|suc_⇒_]    : Term⁺ → Term⁻ → Id → Term⁻ → Term⁻
-    -- begin
+  -- begin
     `⟨_,_⟩                   : Term⁻ → Term⁻ → Term⁻
-    -- end
+    `proj₁_                   : Term⁺ → Term⁻
+    `proj₂_                   : Term⁺ → Term⁻
+  -- end
     μ_⇒_                     : Id → Term⁻ → Term⁻
     _↑                       : Term⁺ → Term⁻
 \end{code}
@@ -429,6 +431,12 @@ Remember to indent all code by two spaces.
   ... | yes ⊢A with inherit Γ M B
   ...   | no ¬∃   = no  λ{ (⊢⟨,⟩ ⊢A ⊢B) → ¬∃ ⊢B }
   ...   | yes ⊢B  = yes (⊢⟨,⟩ ⊢A ⊢B)
+  inherit Γ (`proj₁ _) `ℕ       = no λ()
+  inherit Γ (`proj₂ _) `ℕ       = no λ()
+  inherit Γ (`proj₁ _) (_ ⇒ _)   = no λ()
+  inherit Γ (`proj₂ _) (_ ⇒ _)   = no λ()
+  inherit Γ (`proj₁ _) (_ `× _)  = no λ()
+  inherit Γ (`proj₂ _) (_ `× _)  = no λ()
   -- end
 \end{code}
 
