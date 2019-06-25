@@ -138,24 +138,28 @@ Remember to indent all code by two spaces.
   data Term⁻ : Set
 
   data Term⁺ where
-    `_                        : Id → Term⁺
-    _·_                       : Term⁺ → Term⁻ → Term⁺
-    _↓_                       : Term⁻ → Type → Term⁺
+    `_                         : Id → Term⁺
+    _·_                        : Term⁺ → Term⁻ → Term⁺
+    _↓_                        : Term⁻ → Type → Term⁺
 
   data Term⁻ where
-    ƛ_⇒_                     : Id → Term⁻ → Term⁻
-    `zero                    : Term⁻
-    `suc_                    : Term⁻ → Term⁻
-    `case_[zero⇒_|suc_⇒_]    : Term⁺ → Term⁻ → Id → Term⁻ → Term⁻
+    ƛ_⇒_                      : Id → Term⁻ → Term⁻
+    `zero                     : Term⁻
+    `suc_                     : Term⁻ → Term⁻
+    `case_[zero⇒_|suc_⇒_]     : Term⁺ → Term⁻ → Id → Term⁻ → Term⁻
   -- begin
 
   -- Product
-    `⟨_,_⟩                   : Term⁻ → Term⁻ → Term⁻
+    `⟨_,_⟩                    : Term⁻ → Term⁻ → Term⁻
     `proj₁_                   : Term⁻ → Term⁻
     `proj₂_                   : Term⁻ → Term⁻
+
+  -- Let
+    `let_≡_⇒_                 : Id → Term⁺ → Term⁻ → Term⁻
+
   -- end
-    μ_⇒_                     : Id → Term⁻ → Term⁻
-    _↑                       : Term⁺ → Term⁻
+    μ_⇒_                      : Id → Term⁻ → Term⁻
+    _↑                        : Term⁺ → Term⁻
 \end{code}
 
 ### Sample terms
@@ -243,6 +247,15 @@ Remember to indent all code by two spaces.
       → Γ ⊢ N ↓ B
       ----------------
       → Γ ⊢ `⟨ M , N ⟩ ↓ A `× B
+
+    -- let
+
+    ⊢let : ∀ {Γ x M N A B}
+      → Γ ⊢ M ↑ A
+      → Γ , x ⦂ A ⊢ N ↓ B
+        ----------
+      → Γ ⊢ `let x ≡ M ⇒ N ↓ B
+
     -- end
 
     ⊢μ : ∀ {Γ x N A}
@@ -362,6 +375,14 @@ Remember to indent all code by two spaces.
       ---------------
     → ¬ Γ ⊢ (M ↑) ↓ B
   ¬switch ⊢M A≢B (⊢↑ ⊢M′ A′≡B) rewrite uniq-↑ ⊢M ⊢M′ = A≢B A′≡B
+
+  -- begin
+  subst≡ : ∀ {A  B : Set} (y : B) (P : A → ⊥)
+    → A ≡ B
+    ---------
+    → ⊥
+  subst≡ y P refl = P y
+  -- end
 \end{code}
 
 
@@ -438,6 +459,13 @@ Remember to indent all code by two spaces.
   inherit Γ (`proj₂ _) (_ ⇒ _)   = no λ()
   inherit Γ (`proj₁ _) (_ `× _)  = no λ()
   inherit Γ (`proj₂ _) (_ `× _)  = no λ()
+
+  inherit Γ (`let x ≡ A ⇒ B) M with synthesize Γ A
+  ... | no ¬⊢A = no (λ{ (⊢let a _)  → ¬⊢A ⟨ _ , a ⟩ })
+  ... | yes ⟨ tA , ⊢A ⟩ with inherit (Γ , x ⦂ tA) B M
+  ...    | no ¬⊢M = no (λ{ (⊢let {_} {_} {_} {_} {A}  a b)
+    → subst≡ b ¬⊢M (cong (λ t →  Γ , x ⦂ t ⊢ B ↓ M) (uniq-↑ ⊢A a)) })
+  ...    | yes ⊢M = yes (⊢let ⊢A ⊢M)
   -- end
 \end{code}
 
@@ -474,6 +502,7 @@ Remember to indent all code by two spaces.
   ∥ ⊢↑ ⊢M refl ∥⁻      =  ∥ ⊢M ∥⁺
   -- begin
   ∥ (⊢⟨,⟩ ⊢A ⊢B) ∥⁻    = DB.`⟨ ∥ ⊢A ∥⁻ , ∥ ⊢B ∥⁻ ⟩
+  ∥ (⊢let ⊢A ⊢B) ∥⁻    = ?
   -- end
 \end{code}
 
