@@ -141,6 +141,10 @@ Remember to indent all code by two spaces.
     `_                         : Id → Term⁺
     _·_                        : Term⁺ → Term⁻ → Term⁺
     _↓_                        : Term⁻ → Type → Term⁺
+  -- begin
+    `proj₁_                   : Term⁺ → Term⁺
+    `proj₂_                   : Term⁺ → Term⁺
+  -- end
 
   data Term⁻ where
     ƛ_⇒_                      : Id → Term⁻ → Term⁻
@@ -148,15 +152,8 @@ Remember to indent all code by two spaces.
     `suc_                     : Term⁻ → Term⁻
     `case_[zero⇒_|suc_⇒_]     : Term⁺ → Term⁻ → Id → Term⁻ → Term⁻
   -- begin
-
-  -- Product
     `⟨_,_⟩                    : Term⁻ → Term⁻ → Term⁻
-    `proj₁_                   : Term⁻ → Term⁻
-    `proj₂_                   : Term⁻ → Term⁻
-
-  -- Let
     `let_≡_⇒_                 : Id → Term⁺ → Term⁻ → Term⁻
-
   -- end
     μ_⇒_                      : Id → Term⁻ → Term⁻
     _↑                        : Term⁺ → Term⁻
@@ -218,6 +215,18 @@ Remember to indent all code by two spaces.
         ---------------
       → Γ ⊢ (M ↓ A) ↑ A
 
+  -- begin
+    ⊢proj₁ : ∀ {Γ M A B}
+      → Γ ⊢ M ↑ A `× B
+      ------------------
+      → Γ ⊢ `proj₁ M ↑ A
+
+    ⊢proj₂ : ∀ {Γ N A B}
+      → Γ ⊢ N ↑ A `× B
+      -----------
+      → Γ ⊢ `proj₂ N ↑ B
+  -- end
+
   data _⊢_↓_ where
 
     ⊢ƛ : ∀ {Γ x N A B}
@@ -242,6 +251,8 @@ Remember to indent all code by two spaces.
       → Γ ⊢ `case L [zero⇒ M |suc x ⇒ N ] ↓ A
 
     -- begin
+
+    -- Sums
     ⊢⟨,⟩ : ∀ {Γ A B M N}
       → Γ ⊢ M ↓ A
       → Γ ⊢ N ↓ B
@@ -305,6 +316,14 @@ Remember to indent all code by two spaces.
   rng≡ : ∀ {A A′ B B′} → A ⇒ B ≡ A′ ⇒ B′ → B ≡ B′
   rng≡ refl = refl
 
+  -- begin
+  `×≡l : ∀ {A A´ B B´} → A `× B ≡ A´ `× B´ → A ≡ A´
+  `×≡l refl = refl
+
+  `×≡r : ∀ {A A´ B B´} → A `× B ≡ A´ `× B´ → B ≡ B´
+  `×≡r refl = refl
+  -- end
+
   ℕ≢⇒ : ∀ {A B} → `ℕ ≢ A ⇒ B
   ℕ≢⇒ ()
 
@@ -335,6 +354,10 @@ Remember to indent all code by two spaces.
   uniq-↑ (⊢` ∋x) (⊢` ∋x′)       =  uniq-∋ ∋x ∋x′
   uniq-↑ (⊢L · ⊢M) (⊢L′ · ⊢M′)  =  rng≡ (uniq-↑ ⊢L ⊢L′)
   uniq-↑ (⊢↓ ⊢M) (⊢↓ ⊢M′)       =  refl
+  -- begin
+  uniq-↑ (⊢proj₁ x) (⊢proj₁ y)   =  `×≡l (uniq-↑ x y)
+  uniq-↑ (⊢proj₂ x) (⊢proj₂ y)   =  `×≡r (uniq-↑ x y)
+  -- end
 \end{code}
 
 ## Lookup type of a variable in the context
@@ -412,6 +435,18 @@ Remember to indent all code by two spaces.
   synthesize Γ (M ↓ A) with inherit Γ M A
   ... | no  ¬⊢M             =  no  (λ{ ⟨ _ , ⊢↓ ⊢M ⟩  →  ¬⊢M ⊢M })
   ... | yes ⊢M              =  yes ⟨ A , ⊢↓ ⊢M ⟩
+  -- begin
+  synthesize Γ (`proj₁ M) with synthesize Γ M
+  ... | no ¬⊢M = no (λ{ ⟨ _ , (⊢proj₁ ⊢M) ⟩  →  ¬⊢M ⟨ _ , ⊢M ⟩ })
+  ... | yes ⟨ `ℕ , ⊢Mn ⟩ = no (λ{ ⟨ _ , (⊢proj₁ ⊢M) ⟩  →  ×≢ℕ (uniq-↑ ⊢M ⊢Mn) })
+  ... | yes ⟨ _ ⇒ _ , ⊢M⇒ ⟩ = no (λ{ ⟨ _ , (⊢proj₁ ⊢M) ⟩  →  ×≢⇒ (uniq-↑ ⊢M ⊢M⇒) })
+  ... | yes ⟨ tM `× tN , ⊢M ⟩ = yes ⟨ tM , (⊢proj₁ ⊢M) ⟩
+  synthesize Γ (`proj₂ M) with synthesize Γ M
+  ... | no ¬⊢M = no (λ{ ⟨ _ , (⊢proj₂ ⊢M) ⟩  →  ¬⊢M ⟨ _ , ⊢M ⟩ })
+  ... | yes ⟨ `ℕ , ⊢Mn ⟩ = no (λ{ ⟨ _ , (⊢proj₂ ⊢M) ⟩  →  ×≢ℕ (uniq-↑ ⊢M ⊢Mn) })
+  ... | yes ⟨ _ ⇒ _ , ⊢M⇒ ⟩ = no (λ{ ⟨ _ , (⊢proj₂ ⊢M) ⟩  →  ×≢⇒ (uniq-↑ ⊢M ⊢M⇒) })
+  ... | yes ⟨ _ `× tM , ⊢M ⟩ = yes ⟨ tM , (⊢proj₂ ⊢M) ⟩
+  -- end
 
   inherit Γ (ƛ x ⇒ N) `ℕ      =  no  (λ())
   inherit Γ (ƛ x ⇒ N) (A ⇒ B) with inherit (Γ , x ⦂ A) N B
@@ -453,12 +488,6 @@ Remember to indent all code by two spaces.
   ... | yes ⊢A with inherit Γ N B
   ...   | no ¬∃   = no  λ{ (⊢⟨,⟩ ⊢A ⊢B) → ¬∃ ⊢B }
   ...   | yes ⊢B  = yes (⊢⟨,⟩ ⊢A ⊢B)
-  inherit Γ (`proj₁ _) `ℕ       = no λ()
-  inherit Γ (`proj₂ _) `ℕ       = no λ()
-  inherit Γ (`proj₁ _) (_ ⇒ _)   = no λ()
-  inherit Γ (`proj₂ _) (_ ⇒ _)   = no λ()
-  inherit Γ (`proj₁ _) (_ `× _)  = no λ()
-  inherit Γ (`proj₂ _) (_ `× _)  = no λ()
 
   inherit Γ (`let x ≡ A ⇒ B) M with synthesize Γ A
   ... | no ¬⊢A = no (λ{ (⊢let a _)  → ¬⊢A ⟨ _ , a ⟩ })
@@ -493,6 +522,10 @@ Remember to indent all code by two spaces.
   ∥ ⊢` ⊢x ∥⁺           =  DB.` ∥ ⊢x ∥∋
   ∥ ⊢L · ⊢M ∥⁺         =  ∥ ⊢L ∥⁺ DB.· ∥ ⊢M ∥⁻
   ∥ ⊢↓ ⊢M ∥⁺           =  ∥ ⊢M ∥⁻
+  -- begin
+  ∥ (⊢proj₁ ⊢A) ∥⁺     =  DB.`proj₁ ∥ ⊢A ∥⁺
+  ∥ (⊢proj₂ ⊢B) ∥⁺     =  DB.`proj₂ ∥ ⊢B ∥⁺
+  -- end
 
   ∥ ⊢ƛ ⊢N ∥⁻           =  DB.ƛ ∥ ⊢N ∥⁻
   ∥ ⊢zero ∥⁻           =  DB.`zero
@@ -502,7 +535,7 @@ Remember to indent all code by two spaces.
   ∥ ⊢↑ ⊢M refl ∥⁻      =  ∥ ⊢M ∥⁺
   -- begin
   ∥ (⊢⟨,⟩ ⊢A ⊢B) ∥⁻    = DB.`⟨ ∥ ⊢A ∥⁻ , ∥ ⊢B ∥⁻ ⟩
-  ∥ (⊢let ⊢A ⊢B) ∥⁻    = ?
+  ∥ (⊢let ⊢A ⊢B) ∥⁻    = {!!}
   -- end
 \end{code}
 
