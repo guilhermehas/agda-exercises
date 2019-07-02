@@ -19,7 +19,6 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 
 # Exercise 1
 
-## a
 \begin{code}
 data Tree (A : Set) : Set where
   leaf : A → Tree A
